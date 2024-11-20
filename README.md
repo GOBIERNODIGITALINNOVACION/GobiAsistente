@@ -38,6 +38,7 @@ Cada GobiAsistente está capacitado para proporcionar información sobre:
 
 Cada uno de estos asistentes maneja los 5 temas anteriores, especializados por estado o municipio:
 https://gobiernodigitalinnovacion.github.io/GobiAsistente/aguascalientes.html
+https://gobiernodigitalinnovacion.github.io/GobiAsistente/chilpancingo.html
 
 
 
