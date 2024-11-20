@@ -36,11 +36,10 @@ Cada GobiAsistente está capacitado para proporcionar información sobre:
 
 ## 🔗 GobiAsistentes Disponibles
 
-Cada uno de estos asistentes maneja los 5 temas anteriores, especializados por región:
+Cada uno de estos asistentes maneja los 5 temas anteriores, especializados por estado o municipio:
+https://gobiernodigitalinnovacion.github.io/GobiAsistente/aguascalientes.html
 
-- [GobiAsistente General](./index.html)
-- [GobiAsistente Municipal](./chat-municipal.html)
-- [GobiAsistente Estatal](./chat-estatal.html)
+
 
 ## 🛠️ Características
 
