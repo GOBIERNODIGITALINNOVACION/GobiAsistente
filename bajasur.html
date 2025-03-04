@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Interface</title>
+    <style>
+        :root {
+            --primary-color: #4caf50;
+            --primary-hover: #3e8e41;
+            --dark-bg: #121212;
+            --dark-container: #1e1e2f;
+            --light-bg: #ffffff;
+            --light-container: #f4f4f4;
+            --dark-text: #000000;
+            --light-text: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--light-text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            width: 70%;
+            max-width: 800px;
+            height: 90vh;
+            background-color: var(--dark-container);
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: background-color 0.3s;
+        }
+
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .toggle-theme {
+            padding: 8px 16px;
+            background-color: rgba(0, 0, 0, 0.2);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s;
+        }
+
+        .toggle-theme:hover {
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+
+        .iframe-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .iframe-container iframe {
+            width: 100%;
+            height: calc(100% + 50px); /* Aumentamos la altura para ocultar la barra */
+            border: none;
+            margin-top: -50px; /* Movemos el iframe hacia arriba */
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 0.9rem;
+            padding: 15px;
+            background-color: var(--dark-container);
+            transition: background-color 0.3s;
+        }
+
+        .footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .footer-buttons {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .footer-button {
+            padding: 8px 16px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s;
+        }
+
+        .footer-button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* Light mode */
+        body.light-mode {
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+        }
+
+        .light-mode .container {
+            background-color: var(--light-container);
+        }
+
+        .light-mode .footer {
+            background-color: var(--light-container);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <span id="site-title">Asistente Virtual</span>
+            <button class="toggle-theme" onclick="toggleTheme()">Modo Claro</button>
+        </div>
+
+        <div class="iframe-container">
+            <iframe id="chat-frame" src=""></iframe>
+        </div>
+
+        <div class="footer">
+            <span id="footer-text">Creado con Inteligencia Artificial</span>
+            <div class="footer-buttons" id="footer-buttons">
+                <!-- Los botones se agregarán dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración centralizada
+        const config = {
+            title: "GobiAsistente",
+            iframeSrc: "https://copilotstudio.microsoft.com/environments/9adea742-2faa-ef67-9e21-84e2464a4003/bots/crb70_gobiBajaCaliforniaSur/webchat?__version__=2",
+            footerText: "Creado con Inteligencia Artificial por Gobierno Digital e Innovación. Todos los derechos reservados.",
+            footerLink: "https://www.gobiernodigitaleinnovacion.com/",
+            buttons: [
+                {
+                    text: "Recomendaciones",
+                    url: "https://drive.google.com/file/d/1vMCr-oD21b-0CmVZ0V64rIkzBNOWqQ_3/view"
+                },
+                {
+                    text: "Tutorial",
+                    url: "https://www.youtube.com/watch?v=gzYcbgQ_Ny0"
+                }
+            ]
+        };
+
+        // Inicializar la página con la configuración
+        function initializePage() {
+            document.getElementById('site-title').textContent = config.title;
+            document.getElementById('chat-frame').src = config.iframeSrc;
+            // Separar el texto del pie de página y reemplazar el nombre de la empresa con un enlace
+            const footerTextParts = config.footerText.split('Gobierno Digital e Innovación');
+            document.getElementById('footer-text').innerHTML = 
+                `${footerTextParts[0]}` +
+                `<a href="${config.footerLink}" target="_blank">Gobierno Digital e Innovación</a>` +
+                `${footerTextParts[1]} ` +
+                `<a href="mailto:juanheriberto.rosas@gobiernodigitaleinnovacion.com">Más información</a>`;
+            
+            const buttonsContainer = document.getElementById('footer-buttons');
+            config.buttons.forEach(button => {
+                const btn = document.createElement('button');
+                btn.className = 'footer-button';
+                btn.textContent = button.text;
+                btn.onclick = () => window.open(button.url, '_blank');
+                buttonsContainer.appendChild(btn);
+            });
+        }
+
+        // Función para cambiar el tema
+        function toggleTheme() {
+            const body = document.body;
+            const button = document.querySelector('.toggle-theme');
+            body.classList.toggle('light-mode');
+            button.textContent = body.classList.contains('light-mode') ? 'Modo Oscuro' : 'Modo Claro';
+        }
+
+        // Inicializar la página cuando cargue
+        document.addEventListener('DOMContentLoaded', initializePage);
+    </script>
+</body>
+</html>
