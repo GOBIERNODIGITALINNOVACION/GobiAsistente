@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GobiAsistente: Copilots de México</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1a73e8;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #1a73e8;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            font-size: 0.9em;
+            color: #666;
+            word-break: break-all;
+        }
+
+        .search-container {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        #searchInput {
+            padding: 12px;
+            width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 1em;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        #searchInput:focus {
+            border-color: #1a73e8;
+        }
+
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        footer a {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GobiAsistente: Copilots de México</h1>
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Buscar estado...">
+        </div>
+        <div class="grid" id="copilotsGrid"></div>
+    </div>
+
+    <footer>
+        <p>¿Necesitas ayuda? Mira el <a href="https://www.youtube.com/watch?v=VT2_AYkrej8&t=28s" target="_blank">tutorial en YouTube</a>.</p>
+        <p>Visita la <a href="https://www.gobiernodigitaleinnovacion.com/" target="_blank">página de la empresa</a> que creó los copilotos.</p>
+        <p>Para dudas, contacta a <a href="mailto:juanheriberto.rosas@gobiernodigitaleinnovacion.com">juanheriberto.rosas@gobiernodigitaleinnovacion.com</a>.</p>
+    </footer>
+
+    <script>
+        const copilots = [
+            { name: "Aguascalientes", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/aguascalientes.html" },
+            { name: "Baja California", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/bajacalifornia.html" },
+            { name: "Baja California Sur", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/bajasur.html" },
+            { name: "Campeche", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/campeche.html" },
+            { name: "Chiapas", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/chiapas.html" },
+            { name: "Chihuahua", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/chihuahua.html" },
+            { name: "Ciudad de México", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/ciudaddemexico.html" },
+            { name: "Coahuila", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/coahuila.html" },
+            { name: "Colima", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/colima.html" },
+            { name: "Durango", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/durango.html" },
+            { name: "Estado de México", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/edomex.html" },
+            { name: "Guanajuato", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/guanajuato.html" },
+            { name: "Guerrero", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/guerrero.html" },
+            { name: "Hidalgo", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/hidalgo.html" },
+            { name: "Jalisco", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/jalisco.html" },
+            { name: "Morelos", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/morelos.html" },
+            { name: "Michoacán", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/michoacan.html" },
+            { name: "Nayarit", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/nayarit.html" },
+            { name: "Nuevo León", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/nuevoleon.html" },
+            { name: "Oaxaca", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/oaxaca.html" },
+            { name: "Puebla", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/puebla.html" },
+            { name: "Querétaro", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/queretaro.html" },
+            { name: "Quintana Roo", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/quintana.html" },
+            { name: "Sinaloa", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/sinaloa.html" },
+            { name: "Sonora", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/sonora.html" },
+            { name: "Tabasco", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/tabasco.html" },
+            { name: "Tamaulipas", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/tamaulipas.html" },
+            { name: "Tlaxcala", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/tlaxcala.html" },
+            { name: "Veracruz", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/veracruz.html" },
+            { name: "Yucatán", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/yucatan.html" },
+            { name: "Zacatecas", url: "https://gobiernodigitalinnovacion.github.io/GobiAsistente/zacatecas.html" }
+        ];
+
+        const grid = document.getElementById('copilotsGrid');
+        const searchInput = document.getElementById('searchInput');
+
+        function displayCopilots(copilotsArray) {
+            grid.innerHTML = '';
+            copilotsArray.forEach(copilot => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+               <h2>${copilot.name}</h2>
+               `;
+                card.addEventListener('click', () => {
+                    window.open(copilot.url, '_blank');
+                });
+                grid.appendChild(card);
+            });
+        }
+
+        // Initial display
+        displayCopilots(copilots);
+
+        // Search functionality
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredCopilots = copilots.filter(copilot => 
+                copilot.name.toLowerCase().includes(searchTerm)
+            );
+            displayCopilots(filteredCopilots);
+        });
+    </script>
+</body>
+</html>
