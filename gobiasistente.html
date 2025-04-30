@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Copilots México: Acceso directo a copilots para gobiernos estatales con datos de INEGI, CONEVAL y Hacienda.">
+    <meta name="keywords" content="Copilots México, inteligencia artificial, gestión pública, datos estatales, INEGI, CONEVAL, Hacienda">
+    <meta name="author" content="Gobierno Digital e Innovación">
+    <!-- Open Graph Tags for Social Sharing -->
+    <meta property="og:title" content="Copilots México | Asistentes Estatales de IA">
+    <meta property="og:description" content="Accede a asistentes de IA especializados en datos oficiales de cada estado de México. Transforma la gestión pública con Copilots México.">
+    <meta property="og:url" content="https://gobiernodigitalinnovacion.github.io">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://gobiernodigitaleinnovacion.github.io/imagenes/copilotsmx-og-image.jpg">
     <title>Copilots México | Acceso a Asistentes Estatales</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
@@ -42,6 +50,9 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 20px 0;
             text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
         
         .logo {
@@ -70,6 +81,22 @@
             max-width: 800px;
             margin: 0 auto 40px;
             color: var(--gray);
+        }
+        
+        .cta-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: var(--accent);
+            color: var(--white);
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .cta-button:hover {
+            background-color: var(--primary);
         }
         
         .states-table {
@@ -140,11 +167,26 @@
             padding: 20px;
             border-radius: 8px;
             border-left: 4px solid var(--accent);
+            transition: transform 0.3s ease;
+        }
+        
+        .info-card:hover {
+            transform: translateY(-5px);
         }
         
         .info-card h3 {
             color: var(--primary);
             margin-bottom: 10px;
+        }
+        
+        .info-card a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .info-card a:hover {
+            text-decoration: underline;
         }
         
         .video-container {
@@ -158,6 +200,12 @@
             margin-bottom: 20px;
         }
         
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 20px;
+        }
+        
         .video-wrapper {
             position: relative;
             padding-bottom: 56.25%;
@@ -165,6 +213,11 @@
             overflow: hidden;
             border-radius: 8px;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .video-wrapper:hover {
+            transform: scale(1.02);
         }
         
         .video-wrapper iframe {
@@ -268,6 +321,10 @@
                 grid-template-columns: 1fr;
             }
             
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+            
             .footer-content {
                 flex-direction: column;
                 text-align: center;
@@ -276,6 +333,25 @@
             .social-links {
                 justify-content: center;
                 display: flex;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .info-section {
+                padding: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .logo {
+                font-size: 1.5rem;
+            }
+            
+            .cta-button {
+                padding: 10px 20px;
+                font-size: 0.9rem;
             }
         }
     </style>
@@ -289,7 +365,8 @@
     
     <main class="container">
         <h1>Acceso a Copilots Estatales</h1>
-        <p class="intro">Asistentes de IA especializados en datos oficiales de cada estado de México. Seleccione un estado para acceder al copilot correspondiente.</p>
+        <p class="intro">Asistentes de IA especializados en datos oficiales de cada estado de México. Seleccione un estado para acceder al copilot correspondiente y transformar la gestión pública con información precisa.</p>
+        <a href="https://gobiernodigitaleinnovacion.powerappsportals.com/Contacto/" class="cta-button" target="_blank">Contáctanos para una Demo</a>
         
         <table class="states-table">
             <thead>
@@ -336,7 +413,7 @@
                     <td><a href="https://gobiernodigitalinnovacion.github.io/GobiAsistente/colima.html" target="_blank">Abrir Copilot</a></td>
                 </tr>
                 <tr>
-                    <td>Durango</td>
+                    <td>Durango</td> 
                     <td><a href="https://gobiernodigitalinnovacion.github.io/GobiAsistente/durango.html" target="_blank">Abrir Copilot</a></td>
                 </tr>
                 <tr>
@@ -428,7 +505,7 @@
         
         <div class="info-section">
             <h2>Información sobre los Copilots</h2>
-            <p>Nuestros copilots están diseñados para proporcionar información precisa y actualizada sobre cada estado de México, utilizando datos oficiales de fuentes confiables.</p>
+            <p>Nuestros copilots están diseñados para proporcionar información precisa y actualizada sobre cada estado de México, utilizando datos oficiales de fuentes confiables. <a href="https://gobiernodigitaleinnovacion.github.io/imagenes/copilotsmx" target="_blank">Consulta nuestro documento oficial</a> para más detalles.</p>
             
             <div class="info-grid">
                 <div class="info-card">
@@ -447,10 +524,15 @@
         </div>
         
         <div class="video-container">
-            <h2>Video Explicativo</h2>
-            <p>Vea cómo funcionan nuestros copilots estatales</p>
-            <div class="video-wrapper">
-                <iframe width="560" height="315" src="https://www.youtube.com/embed/dV_WV0lUaxU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <h2>Videos Explicativos</h2>
+            <p>Descubre cómo funcionan nuestros copilots estatales y transforman la gestión pública</p>
+            <div class="video-grid">
+                <div class="video-wrapper">
+                    <iframe src="https://www.youtube.com/embed/dV_WV0lUaxU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+                <div class="video-wrapper">
+                    <iframe src="https://www.youtube.com/embed/oBGXXic3Jfg" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
             </div>
         </div>
     </main>
