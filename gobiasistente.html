@@ -7,92 +7,373 @@
     <meta name="keywords" content="copilots para gobiernos, IA para estados México, IA para municipios México, INEGI, CONEVAL, Hacienda, demografía México, pobreza México, rezago social, finanzas estatales, FAIS México">
     <meta name="author" content="Copilots México">
     <title>Copilots México | Soluciones de IA para Gobiernos</title>
-    <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #0056b3;
+            --secondary: #003366;
+            --accent: #00a0e9;
+            --dark: #333;
+            --gray: #666;
+            --light: #f8f9fa;
+            --white: #fff;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Open Sans', sans-serif;
+            color: var(--dark);
+            line-height: 1.6;
+            background-color: var(--light);
+        }
+        
+        h1, h2, h3, h4 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        header {
+            background-color: var(--white);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            padding: 15px 0;
+        }
+        
+        .logo {
+            display: inline-block;
+            vertical-align: middle;
+        }
+        
+        .logo-img {
+            height: 50px;
+        }
+        
+        /* Hero Section */
+        .hero {
+            position: relative;
+            height: 100vh;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--white);
+            margin-top: 80px;
+            background: linear-gradient(rgba(0, 84, 180, 0.8), rgba(0, 51, 102, 0.8)), url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80') no-repeat center center/cover;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            padding: 0 20px;
+        }
+        
+        .hero h1 {
+            font-size: 2.8rem;
+            margin-bottom: 20px;
+            color: var(--white);
+        }
+        
+        .hero-subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            color: var(--white);
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: var(--accent);
+            color: var(--white);
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-primary {
+            background-color: var(--accent);
+        }
+        
+        .btn-lg {
+            padding: 15px 40px;
+            font-size: 1.1rem;
+        }
+        
+        /* States Table Section */
         .states-table-section {
             padding: 100px 0;
-            background: #f0f2f5;
+            background: var(--light);
             text-align: center;
         }
+        
         .states-table-section h2 {
             font-size: 2.2rem;
             margin-bottom: 15px;
             color: var(--primary);
         }
+        
         .states-table-section p {
             color: var(--gray);
             max-width: 700px;
             margin: 0 auto 30px;
         }
+        
         .states-table {
             max-width: 800px;
             margin: 0 auto;
-            background: white;
+            background: var(--white);
             border-radius: 10px;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
             overflow: hidden;
         }
+        
         .states-table table {
             width: 100%;
             border-collapse: collapse;
         }
+        
         .states-table th, .states-table td {
             padding: 15px 20px;
             text-align: left;
             border-bottom: 1px solid #ddd;
         }
+        
         .states-table th {
             background: var(--primary);
-            color: white;
+            color: var(--white);
             font-family: 'Montserrat', sans-serif;
             font-weight: 600;
         }
+        
         .states-table td {
             font-family: 'Open Sans', sans-serif;
             color: var(--dark);
         }
+        
         .states-table tr {
             transition: background 0.3s ease;
         }
+        
         .states-table tr:hover {
-            background: #f8f9fa;
+            background: #f0f4f8;
         }
+        
         .states-table a {
             color: var(--accent);
             text-decoration: none;
             transition: color 0.3s ease;
+            font-weight: 600;
         }
+        
         .states-table a:hover {
             color: var(--secondary);
+            text-decoration: underline;
         }
-        /* Estilos para el video en la sección hero */
-        .hero-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            align-items: center;
-            flex-wrap: wrap;
+        
+        /* Features Section */
+        .features-section {
+            padding: 80px 0;
+            text-align: center;
+        }
+        
+        .section-header {
+            max-width: 800px;
+            margin: 0 auto 50px;
+        }
+        
+        .section-header h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+        
+        .section-header p {
+            color: var(--gray);
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
             margin-top: 30px;
         }
-        .hero-video-embed {
-            max-width: 300px;
-            width: 100%;
-            height: 169px; /* Relación de aspecto 16:9 para 300px de ancho */
+        
+        .feature-card {
+            background: var(--white);
+            padding: 30px;
             border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+        
+        .feature-card h3 {
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        /* Video Section */
+        .video-section {
+            padding: 80px 0;
+            background-color: var(--white);
+            text-align: center;
+        }
+        
+        .video-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .video-wrapper {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--secondary);
+            color: var(--white);
+            padding: 60px 0 20px;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        
+        .footer-column h3 {
+            color: var(--white);
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+        
+        .footer-column p {
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+        
+        .footer-links a {
+            color: var(--white);
+            opacity: 0.8;
+            text-decoration: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .social-links a {
+            color: var(--white);
+            background-color: rgba(255, 255, 255, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            background-color: var(--accent);
+            transform: translateY(-3px);
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+        
+        /* Responsive */
         @media (max-width: 768px) {
-            .hero-buttons {
-                flex-direction: column;
+            .hero h1 {
+                font-size: 2.2rem;
             }
-            .hero-video-embed {
-                max-width: 100%;
-                height: auto;
+            
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+            
+            .states-table th, .states-table td {
+                padding: 10px 15px;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -102,42 +383,19 @@
     <header>
         <div class="container">
             <div class="logo">
-                <img src="../assets/gdi.png" alt="Copilots México Logo" class="logo-img">
+                <img src="https://via.placeholder.com/150x50?text=Copilots+México" alt="Copilots México Logo" class="logo-img">
             </div>
-            <nav id="mainNav">
-                <ul>
-                    <li><a href="../public/index.html">Inicio</a></li>
-                    <li><a href="../gobiernos/index.html" class="active">Gobiernos</a></li>
-                    <li><a href="../empresas/index.html">Empresas</a></li>
-                    <li><a href="javascript:void(0)" id="contactLink">Contacto</a></li>
-                </ul>
-            </nav>
-            <button class="mobile-menu-btn" id="mobileMenuBtn">
-                <i class="fas fa-bars"></i>
-            </button>
         </div>
     </header>
 
     <!-- Hero Section -->
     <section class="hero">
-        <video autoplay muted loop playsinline class="hero-video">
-            <source src="../assets/videos/hero-banner.mp4" type="video/mp4">
-            <img src="../assets/images/fallback-hero.jpg" alt="Fondo de IA para gobiernos en México">
-        </video>
         <div class="hero-content">
             <h1>Soluciones de IA para Gobiernos</h1>
             <p class="hero-subtitle">Creamos copilots personalizados para estados y municipios con datos oficiales de México, optimizando la toma de decisiones.</p>
-            <div class="hero-buttons">
-                <a href="#contacto" class="btn btn-primary btn-lg">
-                    <i class="fas fa-envelope"></i> Solicitar Demo
-                </a>
-                <div class="hero-video-embed">
-                    <iframe width="100%" height="100%" src="https://www.youtube.com/embed/dV_WV0lUaxU" title="Copilots México - Soluciones para Gobiernos" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                </div>
-            </div>
-        </div>
-        <div class="hero-scroll">
-            <i class="fas fa-chevron-down"></i>
+            <a href="#contacto" class="btn btn-primary btn-lg">
+                <i class="fas fa-envelope"></i> Solicitar Demo
+            </a>
         </div>
     </section>
 
@@ -398,29 +656,20 @@
         </div>
     </section>
 
-    <!-- Formulario Flotante -->
-    <div class="contact-floating">
-        <button id="contactToggle"><i class="fas fa-envelope"></i> Contacto</button>
-        <div class="contact-form">
-            <button class="close-form" id="closeForm"><i class="fas fa-times"></i></button>
-            <h3>Contáctanos</h3>
-            <form id="contactForm" action="https://formspree.io/f/xrbqebaw" method="POST">
-                <input type="text" name="name" placeholder="Nombre completo" required>
-                <input type="email" name="email" placeholder="Correo electrónico" required>
-                <input type="tel" name="phone" placeholder="Teléfono">
-                <select name="reason" required>
-                    <option value="">Motivo de contacto</option>
-                    <option value="gobierno">Gobierno Digital</option>
-                    <option value="empresa">Soluciones Empresariales</option>
-                    <option value="demo">Solicitar Demo</option>
-                </select>
-                <textarea name="message" placeholder="Tu mensaje..." rows="4" required></textarea>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-paper-plane"></i> Enviar Mensaje
-                </button>
-            </form>
+    <!-- Video Section -->
+    <section class="video-section" id="video">
+        <div class="container">
+            <div class="section-header">
+                <h2>Video Explicativo</h2>
+                <p>Conoce más sobre nuestros copilots en este video demostrativo.</p>
+            </div>
+            <div class="video-container">
+                <div class="video-wrapper">
+                    <iframe width="560" height="315" src="https://www.youtube.com/embed/dV_WV0lUaxU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+            </div>
         </div>
-    </div>
+    </section>
 
     <!-- Footer -->
     <footer>
@@ -428,41 +677,26 @@
             <div class="footer-content">
                 <div class="footer-column">
                     <h3>Copilots México</h3>
-                    <p>Líderes en soluciones de inteligencia artificial para gobiernos y empresas en México.</p>
+                    <p>Líderes en soluciones de inteligencia artificial para gobiernos en México.</p>
                     <div class="social-links">
                         <a href="https://www.linkedin.com/company/gobierno-digital-e-innovaci%C3%B3n/" target="_blank"><i class="fab fa-linkedin-in"></i></a>
                         <a href="https://wa.me/525510806597" target="_blank"><i class="fab fa-whatsapp"></i></a>
                         <a href="https://x.com/Gobdigitale" target="_blank"><i class="fab fa-x-twitter"></i></a>
                         <a href="https://github.com/gobiernodigitaleinnovacion" target="_blank"><i class="fab fa-github"></i></a>
-                        <a href="https://www.tiktok.com/@gobierno.digital6" target="_blank"><i class="fab fa-tiktok"></i></a>
-                        <a href="https://www.instagram.com/gobiernodigitaleinnovacion/" target="_blank"><i class="fab fa-instagram"></i></a>
-                        <a href="https://t.me/+525510806597" target="_blank"><i class="fab fa-telegram"></i></a>
                     </div>
                 </div>
                 <div class="footer-column">
-                    <h3>Enlaces Rápidos</h3>
+                    <h3>Contacto</h3>
                     <ul class="footer-links">
-                        <li><a href="../public/index.html">Inicio</a></li>
-                        <li><a href="../gobiernos/index.html">Para Gobiernos</a></li>
-                        <li><a href="../empresas/index.html">Para Empresas</a></li>
-                        <li><a href="javascript:void(0)" id="footerContactLink">Contacto</a></li>
-                    </ul>
-                </div>
-                <div class="footer-column">
-                    <h3>Servicios</h3>
-                    <ul class="footer-links">
-                        <li><a href="../gobiernos/index.html">Copilots Estatales</a></li>
-                        <li><a href="../empresas/index.html">Soluciones Empresariales</a></li>
-                        <li><a href="#">Consultoría en IA</a></li>
-                        <li><a href="#">Capacitación</a></li>
+                        <li><i class="fas fa-envelope"></i> contacto@copilots.mx</li>
+                        <li><i class="fas fa-phone"></i> +52 55 1080 6597</li>
                     </ul>
                 </div>
                 <div class="footer-column">
                     <h3>Legal</h3>
                     <ul class="footer-links">
-                        <li><a href="../legal/terms.html">Términos y Condiciones</a></li>
-                        <li><a href="../legal/privacy.html">Política de Privacidad</a></li>
-                        <li><a href="../legal/notice.html">Aviso Legal</a></li>
+                        <li><a href="#">Términos y Condiciones</a></li>
+                        <li><a href="#">Política de Privacidad</a></li>
                     </ul>
                 </div>
             </div>
@@ -471,8 +705,5 @@
             </div>
         </div>
     </footer>
-
-    <script src="/js/main.js"></script>
-    <script src="/js/tabs.js"></script>
 </body>
 </html>
