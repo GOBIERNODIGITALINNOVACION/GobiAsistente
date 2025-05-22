@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Interface</title>
+    <title>COCOMUNAUTOPISTAS - Chat</title>
     <style>
         :root {
-            --primary-color: #4caf50;
-            --primary-hover: #3e8e41;
+            --primary-color: #2c5e91;
+            --primary-hover: #1e4a7a;
             --dark-bg: #121212;
             --dark-container: #1e1e2f;
             --light-bg: #ffffff;
@@ -30,7 +30,7 @@
         }
 
         .container {
-            width: 70%;
+            width: 95%;
             max-width: 800px;
             height: 90vh;
             background-color: var(--dark-container);
@@ -78,9 +78,9 @@
 
         .iframe-container iframe {
             width: 100%;
-            height: calc(100% + 50px); /* Aumentamos la altura para ocultar la barra */
+            height: calc(100% + 50px);
             border: none;
-            margin-top: -50px; /* Movemos el iframe hacia arriba */
+            margin-top: -50px;
         }
 
         .footer {
@@ -100,29 +100,6 @@
             text-decoration: underline;
         }
 
-        .footer-buttons {
-            margin-top: 10px;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .footer-button {
-            padding: 8px 16px;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background-color 0.3s;
-        }
-
-        .footer-button:hover {
-            background-color: var(--primary-hover);
-        }
-
         /* Light mode */
         body.light-mode {
             background-color: var(--light-bg);
@@ -136,12 +113,36 @@
         .light-mode .footer {
             background-color: var(--light-container);
         }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            .header {
+                font-size: 1.2rem;
+                padding: 10px;
+            }
+            
+            .toggle-theme {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+            
+            .footer {
+                padding: 10px;
+                font-size: 0.8rem;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <span id="site-title">Asistente Virtual</span>
+            <span id="site-title">COCOMUNAUTOPISTAS</span>
             <button class="toggle-theme" onclick="toggleTheme()">Modo Claro</button>
         </div>
 
@@ -150,52 +151,23 @@
         </div>
 
         <div class="footer">
-            <span id="footer-text">Creado con Inteligencia Artificial</span>
-            <div class="footer-buttons" id="footer-buttons">
-                <!-- Los botones se agregarán dinámicamente -->
-            </div>
+            <span id="footer-text">Sistema de atención al usuario</span>
         </div>
     </div>
 
     <script>
         // Configuración centralizada
         const config = {
-            title: "GobiAsistente",
+            title: "COCOMUNAUTOPISTAS",
             iframeSrc: "https://copilotstudio.microsoft.com/environments/Default-b0830f82-c48d-4e9d-ba74-5e25fbf3fb3b/bots/cr1b0_agente_Pakutn/webchat?__version__=2",
-            footerText: "Creado con Inteligencia Artificial por Gobierno Digital e Innovación. Todos los derechos reservados.",
-            footerLink: "https://www.gobiernodigitaleinnovacion.com/",
-            buttons: [
-                {
-                    text: "Recomendaciones",
-                    url: "https://drive.google.com/file/d/1vMCr-oD21b-0CmVZ0V64rIkzBNOWqQ_3/view"
-                },
-                {
-                    text: "Tutorial",
-                    url: "https://www.youtube.com/watch?v=gzYcbgQ_Ny0"
-                }
-            ]
+            footerText: "Sistema de atención al usuario"
         };
 
         // Inicializar la página con la configuración
         function initializePage() {
             document.getElementById('site-title').textContent = config.title;
             document.getElementById('chat-frame').src = config.iframeSrc;
-            // Separar el texto del pie de página y reemplazar el nombre de la empresa con un enlace
-            const footerTextParts = config.footerText.split('Gobierno Digital e Innovación');
-            document.getElementById('footer-text').innerHTML = 
-                `${footerTextParts[0]}` +
-                `<a href="${config.footerLink}" target="_blank">Gobierno Digital e Innovación</a>` +
-                `${footerTextParts[1]} ` +
-                `<a href="mailto:juanheriberto.rosas@gobiernodigitaleinnovacion.com">Más información</a>`;
-            
-            const buttonsContainer = document.getElementById('footer-buttons');
-            config.buttons.forEach(button => {
-                const btn = document.createElement('button');
-                btn.className = 'footer-button';
-                btn.textContent = button.text;
-                btn.onclick = () => window.open(button.url, '_blank');
-                buttonsContainer.appendChild(btn);
-            });
+            document.getElementById('footer-text').textContent = config.footerText;
         }
 
         // Función para cambiar el tema
