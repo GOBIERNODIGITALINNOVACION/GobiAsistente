@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Análisis PTAR - COCOMUN</title>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        select#ptarSelector {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        select#ptarSelector option {
+            color: black;
+            background-color: white;
+        }
+        select#ptarSelector:focus, select#ptarSelector option:checked {
+            color: #3b82f6;
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+        .debug-info {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 8px 0;
+            font-family: monospace;
+            font-size: 12px;
+            color: #e0e0e0;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-2">Sistema de Análisis PTAR - COCOMUN</h1>
+            <p class="text-white opacity-80 mb-4">Análisis Integral de Plantas de Tratamiento de Aguas Residuales</p>
+            <a href="https://gobiernodigitalinnovacion.github.io/GobiAsistente/cocomunautopistas" 
+               target="_blank" 
+               class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 inline-block">
+                ChatCocomun
+            </a>
+        </div>
+
+        <!-- Main Card -->
+        <div class="glass-effect rounded-2xl p-8 shadow-2xl">
+            <!-- File Upload Section -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-semibold text-white mb-4">📁 Cargar Archivo</h2>
+                <div class="bg-white bg-opacity-10 rounded-lg p-6">
+                    <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" 
+                           class="block w-full text-white bg-white bg-opacity-20 rounded-lg p-3 mb-4
+                                  file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0
+                                  file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700
+                                  hover:file:bg-blue-100">
+                    <button id="loadFileButton" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105">
+                        🔄 Cargar y Procesar Archivo
+                    </button>
+                    <p id="fileStatus" class="mt-3 text-green-300 hidden"></p>
+                    
+                    <!-- Debug info -->
+                    <div id="debugInfo" class="debug-info hidden">
+                        <h4 class="text-white font-semibold mb-2">🔍 Información de Debug:</h4>
+                        <div id="debugContent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PTAR Selection Section -->
+            <div id="ptarSelection" class="hidden mb-8">
+                <h2 class="text-2xl font-semibold text-white mb-4">🏭 Seleccionar PTAR para Análisis</h2>
+                <div class="bg-white bg-opacity-10 rounded-lg p-6">
+                    <div class="mb-4">
+                        <label class="block text-white font-medium mb-2">Selecciona la PTAR a analizar:</label>
+                        <select id="ptarSelector" class="w-full rounded-lg p-3">
+                            <option value="">-- Selecciona una PTAR --</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <input type="checkbox" id="analyzeAllPtar" class="mr-2">
+                        <label for="analyzeAllPtar" class="text-white">Analizar todas las PTARs (genera un PDF por cada una)</label>
+                    </div>
+                    <div id="selectedPtarInfo" class="bg-blue-500 bg-opacity-20 rounded-lg p-4 hidden">
+                        <h3 class="text-white font-semibold mb-2">📋 Información de la PTAR Seleccionada:</h3>
+                        <div id="ptarDetails" class="text-white text-sm"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="processControl" class="hidden mb-8">
+                <h2 class="text-2xl font-semibold text-white mb-4">⚙️ Control de Procesos</h2>
+                <div class="bg-white bg-opacity-10 rounded-lg p-6">
+                    <div class="flex flex-wrap gap-4">
+                        <button id="generateAnalysisButton" 
+                                class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105">
+                            📊 Generar Análisis COCOMUN
+                        </button>
+                        <button id="cancelProcessButton" 
+                                class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hidden">
+                            ❌ Cancelar Proceso
+                        </button>
+                        <button id="restartProcessButton" 
+                                class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hidden">
+                            🔄 Reiniciar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div id="progressSection" class="hidden mb-8">
+                <h2 class="text-2xl font-semibold text-white mb-4">📈 Progreso</h2>
+                <div class="bg-white bg-opacity-10 rounded-lg p-6">
+                    <div class="w-full bg-gray-200 bg-opacity-20 rounded-full h-4 mb-4">
+                        <div id="progressBarFill" class="bg-gradient-to-r from-blue-500 to-green-500 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <p id="progressStatus" class="text-white"></p>
+                        <div id="loadingSpinner" class="loading-spinner hidden"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Summary -->
+            <div id="dataSummary" class="hidden mb-8">
+                <h2 class="text-2xl font-semibold text-white mb-4">📋 Resumen de Datos</h2>
+                <div class="bg-white bg-opacity-10 rounded-lg p-6">
+                    <div id="summaryContent" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de Azure OpenAI
+        const AZURE_CONFIG = {
+            endpoint: "https://cuente8n8.openai.azure.com/",
+            apiKey: "4C0mfORSac5WlA2LXBWDXkxI6WF8f0HENRpytmkObBRMlnjLkTjaJQQJ99BEACYeBjFXJ3w3AAABACOGixsB",
+            apiVersion: "2024-12-01-preview",
+            deploymentName: "gpt-4ococomun",
+            modelName: "gpt-4o"
+        };
+
+        // PROMPT SIMPLIFICADO PARA RESUMEN EJECUTIVO
+        const PROMPT_ANALISIS_COCOMUN = `
+            Eres un Especialista en Gestión y Cumplimiento Normativo de Tratamiento de Aguas Residuales para COCOMUN, operador de autopistas mexicanas. Tu tarea es generar un Resumen Ejecutivo (200–300 palabras) basado en datos operativos de un archivo Excel, evaluados según el sistema COCOMUN (10 categorías, celdas I12–I60, respuestas SÍ/NO).
+
+            CATEGORÍAS Y FÓRMULAS:
+            1. Infraestructura Física (I12-I19, 8 items): =COUNTA(I12:I19)/8*100
+            2. Equipamiento y Maquinaria (I21-I24, 4 items): =COUNTA(I21:I24)/4*100
+            3. Documentación y Normativa (I26,I27,I28,I31, 4 items): =COUNTA(I26,I27,I28,I31)/4*100
+            4. Personal Técnico y Operativo (I33-I34, 2 items): =COUNTA(I33:I34)/2*100
+            5. Suministro y Materiales (I36-I38, 3 items): =COUNTA(I36:I38)/3*100
+            6. Registro de Seguimiento y Control (I40-I41, 2 items): =COUNTA(I40:I41)/2*100
+            7. Historial de Mantenimiento (I43-I46, 4 items): =COUNTA(I43:I46)/4*100
+            8. Medición Mensual de Parámetros (I51-I52, 2 items): =COUNTA(I51:I52)/2*100
+            9. Capacitación del Supervisor al Operador (I51-I52, 2 items): =COUNTA(I51:I52)/2*100
+            10. El Operador Cuenta Con (I54-I60, 7 items): =COUNTA(I54:I60)/7*100
+
+            TAREAS:
+            1. Analiza los porcentajes de cumplimiento, datos diagnósticos y bitácora operativa.
+            2. Verifica matemáticamente los porcentajes contra valores SÍ/NO.
+            3. Identifica puntos rojos (categorías <50% o fallos críticos).
+            4. Evalúa cumplimiento normativo (NOM-001, NOM-002, NOM-003).
+            5. Destaca prioridades urgentes y acciones necesarias para abordar problemas críticos.
+            6. Proporciona un análisis integral (estado general, riesgos operativos, cumplimiento normativo).
+
+            FORMATO DE RESPUESTA (TEXTO PLANO):
+            - Resumen Ejecutivo: Resumen conciso (500-1000 palabras) con estado general, puntos rojos, prioridades urgentes, acciones necesarias y análisis integral. No incluyas otras secciones. NO USES ** EN LOS TITULOS O EN ALGUNA PARTE DEL DOCUMENTO
+        `;
+
+        // Variables globales
+        let workbookData = null;
+        let processedData = null;
+        let cancelProcess = false;
+
+        // Event listeners
+        document.getElementById('loadFileButton').addEventListener('click', loadFile);
+        document.getElementById('generateAnalysisButton').addEventListener('click', () => startProcess('analysis'));
+        document.getElementById('cancelProcessButton').addEventListener('click', cancelCurrentProcess);
+        document.getElementById('restartProcessButton').addEventListener('click', restartProcess);
+        document.getElementById('ptarSelector').addEventListener('change', handlePtarSelection);
+        document.getElementById('analyzeAllPtar').addEventListener('change', handleAnalyzeAllToggle);
+
+        // Función para cargar archivo
+        function loadFile() {
+            const file = document.getElementById('excelFile').files[0];
+            if (!file) {
+                alert('Por favor selecciona un archivo');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    workbookData = XLSX.read(data, { type: 'array', cellStyles: true, cellNF: false, cellHTML: false, cellDates: true });
+                    
+                    processedData = processWorkbookDataImproved(workbookData, file.name);
+                    
+                    document.getElementById('fileStatus').textContent = `✅ Archivo cargado: ${file.name}`;
+                    document.getElementById('fileStatus').classList.remove('hidden');
+                    document.getElementById('ptarSelection').classList.remove('hidden');
+                    document.getElementById('processControl').classList.remove('hidden');
+                    
+                    showDebugInfo(processedData);
+                    populatePtarSelector(processedData);
+                    showDataSummary(processedData);
+                    
+                } catch (error) {
+                    console.error('Error al procesar archivo:', error);
+                    document.getElementById('fileStatus').textContent = `❌ Error al procesar el archivo: ${error.message}`;
+                    document.getElementById('fileStatus').classList.remove('hidden', 'text-green-300');
+                    document.getElementById('fileStatus').classList.add('text-red-400');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Función para parsear fecha desde el nombre del archivo
+        function parseDateFromFilename(filename) {
+            const months = {
+                'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4, 'mayo': 5, 'junio': 6,
+                'julio': 7, 'agosto': 8, 'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12
+            };
+            // Buscar patrón como "16de mayo"
+            const regex = /(\d{1,2})\s*de\s*([a-zA-Z]+)/i;
+            const match = filename.match(regex);
+            if (match) {
+                const day = parseInt(match[1], 10);
+                const monthStr = match[2].toLowerCase();
+                const month = months[monthStr];
+                if (day && month) {
+                    // Asumir el año actual (2025) o ajustar según contexto
+                    const year = new Date().getFullYear(); // 2025
+                    const date = new Date(year, month - 1, day);
+                    if (!isNaN(date)) {
+                        return {
+                            display: date.toLocaleDateString('es-ES'), // e.g., 16/05/2025
+                            formatted: date.toISOString().split('T')[0] // e.g., 2025-05-16
+                        };
+                    }
+                }
+            }
+            return null;
+        }
+
+        // Función para procesar datos del workbook
+        function processWorkbookDataImproved(workbook, fileName) {
+            const sheets = {};
+            const summary = {
+                totalSheets: workbook.SheetNames.length,
+                ptarList: [],
+                dataTypes: new Set(),
+                totalRecords: 0,
+                debugInfo: []
+            };
+
+            workbook.SheetNames.forEach(sheetName => {
+                try {
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+                        header: 1, 
+                        blankrows: false,
+                        defval: '',
+                        raw: false
+                    });
+
+                    const cellData = extractDirectCellReferences(worksheet);
+                    const cocomunData = extractCocomunData(jsonData, cellData, worksheet);
+                    
+                    // Extraer la fecha del análisis desde la celda B1
+                    let analysisDate = 'Fecha no encontrada';
+                    let analysisDateFormatted = 'YYYY-MM-DD';
+                    let dateSource = 'B1';
+                    const dateCell = worksheet['B1'];
+                    if (dateCell && dateCell.v) {
+                        let dateValue = dateCell.v;
+                        if (dateCell.t === 'n' && typeof dateValue === 'number') {
+                            // Convertir fecha serial de Excel a JavaScript
+                            const excelEpoch = new Date(1899, 11, 30);
+                            dateValue = new Date(excelEpoch.getTime() + dateValue * 24 * 60 * 60 * 1000);
+                        } else if (typeof dateValue === 'string') {
+                            // Intentar parsear formatos comunes: DD/MM/YYYY, YYYY-MM-DD, etc.
+                            dateValue = dateValue.replace(/de\s+/gi, '');
+                            dateValue = new Date(dateValue);
+                        } else if (dateValue instanceof Date) {
+                            // Ya es una fecha
+                        }
+                        if (dateValue instanceof Date && !isNaN(dateValue)) {
+                            analysisDate = dateValue.toLocaleDateString('es-ES');
+                            analysisDateFormatted = dateValue.toISOString().split('T')[0];
+                        }
+                    } else {
+                        // Fallback: Parsear fecha desde el nombre del archivo
+                        const parsedDate = parseDateFromFilename(fileName);
+                        if (parsedDate) {
+                            analysisDate = parsedDate.display;
+                            analysisDateFormatted = parsedDate.formatted;
+                            dateSource = 'Filename';
+                        } else {
+                            // Último recurso: Usar fecha actual
+                            const fallbackDate = new Date();
+                            analysisDate = fallbackDate.toLocaleDateString('es-ES');
+                            analysisDateFormatted = fallbackDate.toISOString().split('T')[0];
+                            dateSource = 'Current Date (Fallback)';
+                            console.warn(`No se encontró fecha en B1 ni en el nombre del archivo para ${sheetName}. Usando fecha actual.`);
+                        }
+                    }
+
+                    sheets[sheetName] = {
+                        name: sheetName,
+                        data: jsonData,
+                        cellData: cellData,
+                        cocomunData: cocomunData,
+                        headers: jsonData[0] || [],
+                        records: jsonData.length - 1,
+                        diagnosticTable: cocomunData.diagnosticTable,
+                        evaluationTable: cocomunData.evaluationTable,
+                        bitacora: extractBitacoraImproved(jsonData),
+                        photoReferences: extractPhotoReferences(jsonData),
+                        analysisDate: analysisDate,
+                        analysisDateFormatted: analysisDateFormatted
+                    };
+                    
+                    summary.ptarList.push(sheetName);
+                    summary.totalRecords += jsonData.length - 1;
+                    
+                    summary.debugInfo.push({
+                        sheet: sheetName,
+                        rows: jsonData.length,
+                        columns: jsonData[0] ? jsonData[0].length : 0,
+                        cocomunValues: cocomunData.evaluationTable,
+                        analysisDate: analysisDate,
+                        dateSource: dateSource
+                    });
+                    
+                } catch (error) {
+                    console.error(`Error procesando hoja ${sheetName}:`, error);
+                    sheets[sheetName] = { 
+                        name: sheetName, 
+                        error: error.message,
+                        data: [],
+                        cocomunData: { evaluationTable: {}, diagnosticTable: {} },
+                        analysisDate: 'Fecha no encontrada',
+                        analysisDateFormatted: 'YYYY-MM-DD'
+                    };
+                    summary.debugInfo.push({
+                        sheet: sheetName,
+                        error: error.message,
+                        analysisDate: 'Fecha no encontrada',
+                        dateSource: 'Error'
+                    });
+                }
+            });
+
+            return { sheets, summary };
+        }
+
+        // Función para extraer referencias directas de celdas
+        function extractDirectCellReferences(worksheet) {
+            const cellData = {};
+            const targetCells = [
+                'I12', 'I13', 'I14', 'I15', 'I16', 'I17', 'I18', 'I19',
+                'I21', 'I22', 'I23', 'I24',
+                'I26', 'I27', 'I28', 'I31',
+                'I33', 'I34',
+                'I36', 'I37', 'I38',
+                'I40', 'I41',
+                'I43', 'I44', 'I45', 'I46',
+                'I51', 'I52',
+                'I54', 'I55', 'I56', 'I57', 'I58', 'I59', 'I60'
+            ];
+
+            targetCells.forEach(cellRef => {
+                const cell = worksheet[cellRef];
+                cellData[cellRef] = {
+                    value: cell ? cell.v : null,
+                    rawValue: cell ? (cell.w || cell.v) : null,
+                    type: cell ? cell.t : null,
+                    formula: cell ? cell.f : null
+                };
+            });
+
+            return cellData;
+        }
+
+        // Función para extraer datos COCOMUN
+        function extractCocomunData(jsonData, cellData, worksheet) {
+            const categories = {
+                infraestructura: { cells: ['I12', 'I13', 'I14', 'I15', 'I16', 'I17', 'I18', 'I19'], total: 8 },
+                equipamiento: { cells: ['I21', 'I22', 'I23', 'I24'], total: 4 },
+                documentacion: { cells: ['I26', 'I27', 'I28', 'I31'], total: 4 },
+                personal: { cells: ['I33', 'I34'], total: 2 },
+                suministros: { cells: ['I36', 'I37', 'I38'], total: 3 },
+                registro: { cells: ['I40', 'I41'], total: 2 },
+                mantenimiento: { cells: ['I43', 'I44', 'I45', 'I46'], total: 4 },
+                medicion: { cells: ['I51', 'I52'], total: 2 },
+                capacitacion: { cells: ['I51', 'I52'], total: 2 },
+                operador: { cells: ['I54', 'I55', 'I56', 'I57', 'I58', 'I59', 'I60'], total: 7 }
+            };
+
+            const diagnosticTable = {};
+            const evaluationTable = {};
+
+            Object.keys(categories).forEach(category => {
+                const categoryData = categories[category];
+                let positiveCount = 0;
+                const cellValues = [];
+
+                categoryData.cells.forEach(cellRef => {
+                    let cellValue = null;
+                    if (cellData[cellRef]) {
+                        cellValue = cellData[cellRef].value;
+                    }
+                    if (cellValue === null || cellValue === undefined) {
+                        const row = parseInt(cellRef.substring(1)) - 1;
+                        const col = 8;
+                        if (jsonData[row] && jsonData[row][col] !== undefined) {
+                            cellValue = jsonData[row][col];
+                        }
+                    }
+
+                    const isPositive = isPositiveValue(cellValue);
+                    if (isPositive) positiveCount++;
+                    
+                    cellValues.push({
+                        cell: cellRef,
+                        value: cellValue,
+                        isPositive: isPositive
+                    });
+                });
+
+                const percentage = Math.round((positiveCount / categoryData.total) * 100);
+                diagnosticTable[category] = cellValues;
+                evaluationTable[category] = percentage;
+            });
+
+            return {
+                diagnosticTable: diagnosticTable,
+                evaluationTable: evaluationTable,
+                categories: categories
+            };
+        }
+
+        // Función para determinar valores positivos
+        function isPositiveValue(value) {
+            if (value === null || value === undefined || value === '') return false;
+            
+            const valueStr = value.toString().toLowerCase().trim();
+            const positiveValues = ['sí', 'si', 'yes', '1', 'true', 'cumple', 'x', 'disponible', 'operativo', 'presente'];
+            const negativeValues = ['no', 'false', '0', 'no cumple', 'ausente', 'faltante', 'inoperativo'];
+            
+            if (positiveValues.includes(valueStr)) return true;
+            if (negativeValues.includes(valueStr)) return false;
+            
+            const numValue = parseFloat(valueStr);
+            if (!isNaN(numValue)) return numValue > 0;
+            
+            return valueStr.length > 0 && valueStr !== 'n/a' && valueStr !== 'na';
+        }
+
+        // Función para extraer bitácora
+        function extractBitacoraImproved(data) {
+            const keywords = ['mantenimiento', 'mantenim', 'auditor', 'auditar', 'suministro', 'repara', 'limpieza', 'capacita'];
+            const bitacora = [];
+            const seenRows = new Set();
+            
+            data.forEach((row, index) => {
+                if (row && Array.isArray(row)) {
+                    const hasRelevantContent = row.some(cell => {
+                        if (typeof cell !== 'string') return false;
+                        const lowerCell = cell.toLowerCase();
+                        return keywords.some(keyword => lowerCell.includes(keyword));
+                    });
+                    
+                    if (hasRelevantContent && !seenRows.has(index)) {
+                        bitacora.push({
+                            row: index + 1,
+                            content: row.filter(cell => cell != null && cell !== '').join(' | ')
+                        });
+                        seenRows.add(index);
+                    }
+                }
+            });
+            
+            return bitacora;
+        }
+
+        // Función para extraer referencias a fotos
+        function extractPhotoReferences(data) {
+            const photoKeywords = ['foto', 'imagen', 'picture', 'image', 'evidencia', 'fotográf'];
+            const photos = [];
+            
+            data.forEach((row, index) => {
+                if (row && Array.isArray(row)) {
+                    const hasPhotoContent = row.some(cell => {
+                        if (typeof cell !== 'string') return false;
+                        const lowerCell = cell.toLowerCase();
+                        return photoKeywords.some(keyword => lowerCell.includes(keyword));
+                    });
+                    
+                    if (hasPhotoContent) {
+                        photos.push({
+                            row: index + 1,
+                            content: row.filter(cell => cell != null && cell !== '').join(' | ')
+                        });
+                    }
+                }
+            });
+            
+            return photos;
+        }
+
+        // Función para mostrar información de debug
+        function showDebugInfo(data) {
+            const debugDiv = document.getElementById('debugInfo');
+            const debugContent = document.getElementById('debugContent');
+            
+            let debugHtml = '<h5 class="text-yellow-300 font-semibold">Hojas procesadas:</h5>';
+            
+            data.summary.debugInfo.forEach(info => {
+                debugHtml += `
+                    <div class="mb-2 p-2 bg-black bg-opacity-30 rounded">
+                        <strong>${info.sheet}</strong><br>
+                        Filas: ${info.rows || 0}, Columnas: ${info.columns || 0}<br>
+                        Fecha del análisis: ${info.analysisDate} (Fuente: ${info.dateSource})<br>
+                        Evaluaciones COCOMUN:<br>
+                        <small>
+                            ${info.cocomunValues ? `
+                                Infraestructura: ${info.cocomunValues.infraestructura || 0}% | 
+                                Equipamiento: ${info.cocomunValues.equipamiento || 0}% | 
+                                Documentación: ${info.cocomunValues.documentacion || 0}%<br>
+                                Personal: ${info.cocomunValues.personal || 0}% | 
+                                Suministros: ${info.cocomunValues.suministros || 0}% | 
+                                Registro: ${info.cocomunValues.registro || 0}%<br>
+                                Mantenimiento: ${info.cocomunValues.mantenimiento || 0}% | 
+                                Medición: ${info.cocomunValues.medicion || 0}% | 
+                                Capacitación: ${info.cocomunValues.capacitacion || 0}% | 
+                                Operador: ${info.cocomunValues.operador || 0}%
+                            ` : 'No disponibles'}
+                        </small>
+                        ${info.error ? `<p class="text-red-400">Error: ${info.error}</p>` : ''}
+                    </div>
+                `;
+            });
+            
+            debugContent.innerHTML = debugHtml;
+            debugDiv.classList.remove('hidden');
+        }
+
+        // Poblar selector de PTAR
+        function populatePtarSelector(data) {
+            const selector = document.getElementById('ptarSelector');
+            selector.innerHTML = '<option value="">-- Selecciona una PTAR --</option>';
+            
+            data.summary.ptarList.forEach((ptarName, index) => {
+                const option = document.createElement('option');
+                option.value = ptarName;
+                option.textContent = `${index + 1}. ${ptarName}`;
+                selector.appendChild(option);
+            });
+        }
+
+        // Manejar selección de PTAR
+        function handlePtarSelection() {
+            const selectedPtar = document.getElementById('ptarSelector').value;
+            const analyzeAllCheckbox = document.getElementById('analyzeAllPtar');
+            const generateButton = document.getElementById('generateAnalysisButton');
+            const ptarInfo = document.getElementById('selectedPtarInfo');
+            const ptarDetails = document.getElementById('ptarDetails');
+            
+            if (selectedPtar) {
+                analyzeAllCheckbox.checked = false;
+                generateButton.disabled = false;
+                
+                const ptarData = processedData.sheets[selectedPtar];
+                if (ptarData.error) {
+                    ptarDetails.innerHTML = `<p><strong>Error:</strong> ${ptarData.error}</p>`;
+                } else {
+                    const evalTable = ptarData.evaluationTable || {};
+                    ptarDetails.innerHTML = `
+                        <p><strong>Nombre:</strong> ${selectedPtar}</p>
+                        <p><strong>Fecha del análisis:</strong> ${ptarData.analysisDate}</p>
+                        <p><strong>Registros:</strong> ${ptarData.records}</p>
+                        <p><strong>Evaluaciones COCOMUN:</strong></p>
+                        <div class="grid grid-cols-2 gap-2 mt-2 text-xs">
+                            <span>Infraestructura: <strong>${evalTable.infraestructura || 0}%</strong></span>
+                            <span>Equipamiento: <strong>${evalTable.equipamiento || 0}%</strong></span>
+                            <span>Documentación: <strong>${evalTable.documentacion || 0}%</strong></span>
+                            <span>Personal: <strong>${evalTable.personal || 0}%</strong></span>
+                            <span>Suministros: <strong>${evalTable.suministros || 0}%</strong></span>
+                            <span>Registro: <strong>${evalTable.registro || 0}%</strong></span>
+                            <span>Mantenimiento: <strong>${evalTable.mantenimiento || 0}%</strong></span>
+                            <span>Medición: <strong>${evalTable.medicion || 0}%</strong></span>
+                            <span>Capacitación: <strong>${evalTable.capacitacion || 0}%</strong></span>
+                            <span>Operador: <strong>${evalTable.operador || 0}%</strong></span>
+                        </div>
+                    `;
+                }
+                ptarInfo.classList.remove('hidden');
+            } else {
+                ptarInfo.classList.add('hidden');
+                if (!analyzeAllCheckbox.checked) {
+                    generateButton.disabled = true;
+                }
+            }
+        }
+
+        // Manejar toggle de "Analizar todas"
+        function handleAnalyzeAllToggle() {
+            const analyzeAllCheckbox = document.getElementById('analyzeAllPtar');
+            const ptarSelector = document.getElementById('ptarSelector');
+            const generateButton = document.getElementById('generateAnalysisButton');
+            const ptarInfo = document.getElementById('selectedPtarInfo');
+            
+            if (analyzeAllCheckbox.checked) {
+                ptarSelector.value = '';
+                ptarInfo.classList.add('hidden');
+                generateButton.disabled = false;
+                generateButton.textContent = '📊 Generar Análisis de Todas las PTARs COCOMUN';
+            } else {
+                generateButton.textContent = '📊 Generar Análisis COCOMUN';
+                if (!ptarSelector.value) {
+                    generateButton.disabled = true;
+                }
+            }
+        }
+
+        function showDataSummary(data) {
+            const summaryContent = document.getElementById('summaryContent');
+            
+            let totalEvaluations = 0;
+            let completedEvaluations = 0;
+            
+            data.summary.ptarList.forEach(ptarName => {
+                const ptarData = data.sheets[ptarName];
+                if (ptarData.evaluationTable) {
+                    Object.values(ptarData.evaluationTable).forEach(percentage => {
+                        totalEvaluations++;
+                        if (percentage > 0) completedEvaluations++;
+                    });
+                }
+            });
+            
+            summaryContent.innerHTML = `
+                <div class="bg-blue-500 bg-opacity-20 rounded-lg p-4">
+                    <h3 class="text-white font-semibold mb-2">🏭 PTARs COCOMUN</h3>
+                    <p class="text-white text-2xl font-bold">${data.summary.totalSheets}</p>
+                    <p class="text-white text-sm">Plantas analizadas</p>
+                </div>
+                <div class="bg-green-500 bg-opacity-20 rounded-lg p-4">
+                    <h3 class="text-white font-semibold mb-2">📊 Evaluaciones</h3>
+                    <p class="text-white text-2xl font-bold">${totalEvaluations}</p>
+                    <p class="text-white text-sm">Categorías procesadas</p>
+                </div>
+                <div class="bg-purple-500 bg-opacity-20 rounded-lg p-4">
+                    <h3 class="text-white font-semibold mb-2">✅ Cumplimiento</h3>
+                    <p class="text-white text-2xl font-bold">${Math.round((completedEvaluations/totalEvaluations)*100) || 0}%</p>
+                    <p class="text-white text-sm">Promedio general</p>
+                </div>
+            `;
+            document.getElementById('dataSummary').classList.remove('hidden');
+        }
+
+        // Iniciar proceso
+        async function startProcess(type) {
+            cancelProcess = false;
+            
+            document.getElementById('generateAnalysisButton').classList.add('hidden');
+            document.getElementById('cancelProcessButton').classList.remove('hidden');
+            document.getElementById('progressSection').classList.remove('hidden');
+            document.getElementById('loadingSpinner').classList.remove('hidden');
+            
+            updateProgressBar(0, 'Iniciando proceso COCOMUN...');
+
+            try {
+                if (type === 'analysis') {
+                    await generateAnalysis();
+                }
+                
+                if (!cancelProcess) {
+                    updateProgressBar(100, 'Proceso COCOMUN completado exitosamente');
+                }
+            } catch (error) {
+                console.error('Error en el proceso:', error);
+                updateProgressBar(0, `Error en el procesamiento: ${error.message}`);
+            }
+            
+            document.getElementById('cancelProcessButton').classList.add('hidden');
+            document.getElementById('restartProcessButton').classList.remove('hidden');
+            document.getElementById('loadingSpinner').classList.add('hidden');
+        }
+
+        // Generar análisis
+        async function generateAnalysis() {
+            const selectedPtar = document.getElementById('ptarSelector').value;
+            const analyzeAll = document.getElementById('analyzeAllPtar').checked;
+            
+            if (analyzeAll) {
+                await generateAllPtarAnalysis();
+            } else if (selectedPtar) {
+                await generateSinglePtarAnalysis(selectedPtar);
+            } else {
+                alert('Por favor selecciona una PTAR o marca "Analizar todas"');
+                return;
+            }
+        }
+
+        // Generar análisis de una sola PTAR
+        async function generateSinglePtarAnalysis(ptarName) {
+            updateProgressBar(20, `Preparando análisis COCOMUN para ${ptarName}...`);
+            
+            const analysisData = prepareCocomunAnalysisData(ptarName);
+            
+            updateProgressBar(40, 'Enviando datos a Azure OpenAI...');
+            
+            let analysis;
+            try {
+                analysis = await analyzeWithAzureOpenAI(analysisData);
+            } catch (error) {
+                console.warn('Azure OpenAI falló, usando análisis de respaldo:', error);
+                updateProgressBar(60, 'Usando análisis de respaldo debido a error en Azure OpenAI...');
+                analysis = generateCocomunBackupAnalysis(analysisData);
+            }
+            
+            updateProgressBar(80, 'Generando PDF del análisis COCOMUN...');
+            
+            await generateCocomunPDF(ptarName, analysis, analysisData);
+            
+            updateProgressBar(100, `Análisis COCOMUN de ${ptarName} completado y descargado`);
+        }
+
+        // Generar análisis de todas las PTARs
+        async function generateAllPtarAnalysis() {
+            const ptarList = processedData.summary.ptarList;
+            const totalPtars = ptarList.length;
+            
+            for (let i = 0; i < totalPtars; i++) {
+                if (cancelProcess) break;
+                
+                const ptarName = ptarList[i];
+                const progressPercent = ((i + 1) / totalPtars) * 100;
+                
+                updateProgressBar(progressPercent * 0.8, `Procesando COCOMUN ${ptarName} (${i + 1}/${totalPtars})...`);
+                
+                const analysisData = prepareCocomunAnalysisData(ptarName);
+                let analysis;
+                try {
+                    analysis = await analyzeWithAzureOpenAI(analysisData);
+                } catch (error) {
+                    console.warn(`Azure OpenAI falló para ${ptarName}, usando respaldo:`, error);
+                    analysis = generateCocomunBackupAnalysis(analysisData);
+                }
+                await generateCocomunPDF(ptarName, analysis, analysisData);
+                
+                await new Promise(resolve => setTimeout(resolve, 1500));
+            }
+            
+            if (!cancelProcess) {
+                updateProgressBar(100, `Análisis COCOMUN completado: ${totalPtars} PTARs procesadas`);
+            }
+        }
+
+        // Preparar datos para análisis
+        function prepareCocomunAnalysisData(ptarName) {
+            const ptarSheet = processedData.sheets[ptarName];
+            
+            return {
+                metadata: {
+                    ptarName: ptarName,
+                    empresa: 'COCOMUN',
+                    totalRecords: ptarSheet.records || 0,
+                    analysisDate: ptarSheet.analysisDate,
+                    analysisDateFormatted: ptarSheet.analysisDateFormatted,
+                    fileName: document.getElementById('excelFile').files[0]?.name || 'Archivo no identificado'
+                },
+                cocomunData: {
+                    evaluationTable: ptarSheet.evaluationTable || {},
+                    diagnosticTable: ptarSheet.diagnosticTable || {},
+                    categories: ptarSheet.cocomunData?.categories || {},
+                    cellData: ptarSheet.cellData || {}
+                },
+                operationalData: {
+                    bitacora: ptarSheet.bitacora || [],
+                    photoReferences: ptarSheet.photoReferences || [],
+                    headers: ptarSheet.headers || []
+                },
+                sampleData: ptarSheet.data ? ptarSheet.data.slice(0, 10) : [],
+                hasError: ptarSheet.error || null
+            };
+        }
+
+        // Analizar con Azure OpenAI
+        async function analyzeWithAzureOpenAI(analysisData) {
+            const prompt = `${PROMPT_ANALISIS_COCOMUN}
+
+            ANÁLISIS PARA "${analysisData.metadata.ptarName}":
+            - PTAR: ${analysisData.metadata.ptarName}
+            - Empresa: ${analysisData.metadata.empresa}
+            - Archivo: ${analysisData.metadata.fileName}
+            - Fecha del análisis: ${analysisData.metadata.analysisDate}
+            - Registros: ${analysisData.metadata.totalRecords}
+            
+            EVALUACIONES COCOMUN:
+            ${JSON.stringify(analysisData.cocomunData.evaluationTable, null, 2)}
+            
+            DIAGNÓSTICO DETALLADO:
+            ${Object.keys(analysisData.cocomunData.diagnosticTable).map(category => {
+                const cells = analysisData.cocomunData.diagnosticTable[category];
+                return `${category}:\n${cells.map(c => `  - Celda ${c.cell}: ${c.isPositive ? 'Cumple' : 'No cumple'} (${c.value || 'Vacío'})`).join('\n')}`;
+            }).join('\n\n')}
+            
+            BITÁCORA OPERATIVA:
+            ${analysisData.operationalData.bitacora.slice(0, 5).map(item => `- Fila ${item.row}: ${item.content}`).join('\n') || 'No se encontraron registros.'}
+            
+            INSTRUCCIONES:
+            Genera un Resumen Ejecutivo conciso (500–1000 palabras) en texto plano, destacando puntos rojos, prioridades urgentes, acciones necesarias y un análisis integral basado en los datos proporcionados.
+            `;
+
+            try {
+                const response = await fetch(`${AZURE_CONFIG.endpoint}openai/deployments/${AZURE_CONFIG.deploymentName}/chat/completions?api-version=${AZURE_CONFIG.apiVersion}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'api-key': AZURE_CONFIG.apiKey
+                    },
+                    body: JSON.stringify({
+                        model: AZURE_CONFIG.modelName,
+                        messages: [
+                            { 
+                                role: "system", 
+                                content: "Eres un Especialista en Gestión y Cumplimiento Normativo de Tratamiento de Aguas Residuales. Proporciona un Resumen Ejecutivo conciso y actionable en texto plano."
+                            },
+                            { role: "user", content: prompt }
+                        ],
+                        max_tokens: 4000,
+                        temperature: 0.3
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error HTTP: ${response.status}, ${errorText}`);
+                }
+
+                const result = await response.json();
+                return result.choices[0].message.content.trim();
+            } catch (error) {
+                console.error('Error con Azure OpenAI:', error);
+                return generateCocomunBackupAnalysis(analysisData);
+            }
+        }
+
+        // Generar análisis de respaldo (Resumen Ejecutivo)
+        function generateCocomunBackupAnalysis(analysisData) {
+            const evalTable = analysisData.cocomunData.evaluationTable;
+            const diagnosticTable = analysisData.cocomunData.diagnosticTable;
+            const bitacora = analysisData.operationalData.bitacora;
+            
+            const averageCompliance = Math.round(Object.values(evalTable).reduce((a, b) => a + b, 0) / Object.keys(evalTable).length);
+            const criticalIssues = Object.entries(evalTable)
+                .filter(([_, value]) => value < 50)
+                .map(([key, value]) => `${key} (${value}%)`);
+            
+            let summary = `RESUMEN EJECUTIVO: ${analysisData.metadata.ptarName}\n`;
+            summary += `La PTAR ${analysisData.metadata.ptarName}, operada por COCOMUN, presenta un cumplimiento promedio de ${averageCompliance}% según la evaluación COCOMUN del ${analysisData.metadata.analysisDate}. `;
+            
+            if (criticalIssues.length > 0) {
+                summary += `Se identificaron puntos rojos críticos: ${criticalIssues.join(', ')}. `;
+                Object.entries(diagnosticTable).forEach(([category, cells]) => {
+                    if (evalTable[category] < 50) {
+                        const issues = cells.filter(c => !c.isPositive).map(c => `Celda ${c.cell}: ${c.value || 'Vacío'}`).join('; ');
+                        summary += `${category} requiere atención urgente debido a fallos en: ${issues}. `;
+                    }
+                });
+            } else {
+                summary += `No se detectaron puntos rojos críticos. `;
+            }
+
+            summary += `El cumplimiento normativo muestra conformidad con NOM-001 (documentación) y NOM-002 (mediciones), pero NOM-003 (infraestructura) necesita mejoras si Infraestructura Física está por debajo del 80%. `;
+
+            if (bitacora.length > 0) {
+                const keyIssues = bitacora.slice(0, 2).map(item => item.content.split('|').slice(0, 2).join(': ')).join('; ');
+                summary += `La bitácora operativa destaca: ${keyIssues}. `;
+            }
+
+            summary += `Acciones prioritarias incluyen abordar categorías con <50% de cumplimiento mediante reparaciones inmediatas, capacitación del personal y actualización de equipos. Es necesario programar una auditoría en 30 días para verificar avances.`;
+
+            return summary;
+        }
+
+        // Generar PDF COCOMUN
+        async function generateCocomunPDF(ptarName, analysis, ptarData) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const fileName = `COCOMUN_${ptarName.replace(/[^a-zA-Z0-9]/g, '_')}_${ptarData.metadata.analysisDateFormatted}.pdf`;
+
+            const margin = 15;
+            const pageWidth = doc.internal.pageSize.width;
+            const pageHeight = doc.internal.pageSize.height;
+            const contentWidth = pageWidth - 2 * margin;
+            const headerHeight = 35;
+            const footerHeight = 15;
+            let yPosition = margin + headerHeight;
+
+            function addCocomunHeader(pageNumber) {
+                doc.setFillColor(200, 220, 255);
+                doc.rect(0, 0, pageWidth, headerHeight, 'F');
+                doc.setFontSize(18);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(0, 0, 0);
+                doc.text("COCOMUN", margin, margin + 8);
+                doc.setFontSize(12);
+                doc.text("Operador de Autopistas", margin, margin + 18);
+                if (pageNumber === 1) {
+                    doc.text(`Análisis PTAR: ${ptarName}`, margin, margin + 28);
+                }
+                doc.setFontSize(10);
+                doc.text(`Fecha del análisis: ${ptarData.metadata.analysisDate}`, pageWidth - margin - 70, margin + 15);
+            }
+
+            function addCocomunFooter(pageNum, pageCount) {
+                doc.setFillColor(230, 240, 255);
+                doc.rect(0, pageHeight - footerHeight, pageWidth, footerHeight, 'F');
+                doc.setFontSize(8);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont("helvetica", "normal");
+                doc.text(`COCOMUN - Sistema de Análisis PTAR`, margin, pageHeight - 5);
+                doc.text(`Página ${pageNum} de ${pageCount}`, pageWidth - margin, pageHeight - 5, { align: 'right' });
+            }
+
+            function checkPageOverflow(additionalHeight) {
+                if (yPosition + additionalHeight > pageHeight - margin - footerHeight) {
+                    addCocomunFooter(doc.internal.getCurrentPageInfo().pageNumber, 1);
+                    doc.addPage();
+                    yPosition = margin + headerHeight;
+                    addCocomunHeader(doc.internal.getCurrentPageInfo().pageNumber + 1);
+                }
+            }
+
+            addCocomunHeader(1);
+
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.text("INFORMACIÓN DEL ANÁLISIS", margin, yPosition);
+            yPosition += 10;
+
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Archivo fuente: ${ptarData.metadata.fileName}`, margin, yPosition);
+            yPosition += 6;
+            doc.text(`Registros procesados: ${ptarData.metadata.totalRecords}`, margin, yPosition);
+            yPosition += 6;
+            doc.text(`Sistema de evaluación: COCOMUN (10 categorías)`, margin, yPosition);
+            yPosition += 15;
+
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.text("EVALUACIONES COCOMUN", margin, yPosition);
+            yPosition += 10;
+
+            doc.setFillColor(230, 230, 230);
+            doc.rect(margin, yPosition, contentWidth, 8, 'F');
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text("Categoría", margin + 5, yPosition + 6);
+            doc.text("Cumplimiento", pageWidth - margin - 30, yPosition + 6);
+            doc.text("Estado", pageWidth - margin - 70, yPosition + 6);
+            yPosition += 8;
+
+            const evalData = [
+                { name: "1. Infraestructura Física", value: ptarData.cocomunData.evaluationTable.infraestructura || 0 },
+                { name: "2. Equipamiento y Maquinaria", value: ptarData.cocomunData.evaluationTable.equipamiento || 0 },
+                { name: "3. Documentación y Normativa", value: ptarData.cocomunData.evaluationTable.documentacion || 0 },
+                { name: "4. Personal Técnico y Operativo", value: ptarData.cocomunData.evaluationTable.personal || 0 },
+                { name: "5. Suministro y Materiales", value: ptarData.cocomunData.evaluationTable.suministros || 0 },
+                { name: "6. Registro de Seguimiento y Control", value: ptarData.cocomunData.evaluationTable.registro || 0 },
+                { name: "7. Historial de Mantenimiento", value: ptarData.cocomunData.evaluationTable.mantenimiento || 0 },
+                { name: "8. Medición Mensual de Parámetros", value: ptarData.cocomunData.evaluationTable.medicion || 0 },
+                { name: "9. Capacitación del Supervisor al Operador", value: ptarData.cocomunData.evaluationTable.capacitacion || 0 },
+                { name: "10. El Operador Cuenta Con", value: ptarData.cocomunData.evaluationTable.operador || 0 }
+            ];
+
+            doc.setFont("helvetica", "normal");
+            evalData.forEach(item => {
+                checkPageOverflow(8);
+                if (item.value === 0) {
+                    doc.setFillColor(255, 182, 193);
+                } else if (item.value === 100) {
+                    doc.setFillColor(144, 238, 144);
+                } else {
+                    doc.setFillColor(255, 255, 224);
+                }
+                
+                doc.rect(margin, yPosition, contentWidth, 8, 'F');
+                doc.rect(margin, yPosition, contentWidth, 8);
+                
+                doc.text(item.name, margin + 5, yPosition + 6);
+                doc.text(`${item.value}%`, pageWidth - margin - 25, yPosition + 6, { align: 'right' });
+                
+                const status = item.value === 0 ? 'CRÍTICO' : item.value === 100 ? 'COMPLETO' : 'PARCIAL';
+                doc.text(status, pageWidth - margin - 65, yPosition + 6, { align: 'right' });
+                
+                yPosition += 8;
+            });
+
+            yPosition += 15;
+
+            checkPageOverflow(30);
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.text("RESUMEN EJECUTIVO", margin, yPosition);
+            yPosition += 10;
+
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            const lines = doc.splitTextToSize(analysis.trim(), contentWidth);
+            lines.forEach(line => {
+                checkPageOverflow(6);
+                doc.setFont("helvetica", "normal");
+                doc.text(line, margin, yPosition);
+                yPosition += 6;
+            });
+
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                addCocomunHeader(i);
+                addCocomunFooter(i, pageCount);
+            }
+
+            doc.save(fileName);
+        }
+
+        // Actualizar barra de progreso
+        function updateProgressBar(percentage, message) {
+            document.getElementById('progressBarFill').style.width = `${percentage}%`;
+            document.getElementById('progressStatus').textContent = message;
+        }
+
+        // Cancelar proceso
+        function cancelCurrentProcess() {
+            cancelProcess = true;
+            updateProgressBar(0, 'Proceso cancelado por el usuario');
+            document.getElementById('cancelProcessButton').classList.add('hidden');
+            document.getElementById('restartProcessButton').classList.remove('hidden');
+            document.getElementById('loadingSpinner').classList.add('hidden');
+        }
+
+        // Reiniciar proceso
+        function restartProcess() {
+            document.getElementById('ptarSelector').value = '';
+            document.getElementById('analyzeAllPtar').checked = false;
+            document.getElementById('generateAnalysisButton').disabled = true;
+            document.getElementById('generateAnalysisButton').textContent = '📊 Generar Análisis COCOMUN';
+            document.getElementById('progressSection').classList.add('hidden');
+            document.getElementById('selectedPtarInfo').classList.add('hidden');
+            document.getElementById('debugInfo').classList.add('hidden');
+            document.getElementById('generateAnalysisButton').classList.remove('hidden');
+            document.getElementById('restartProcessButton').classList.add('hidden');
+            updateProgressBar(0, '');
+        }
+    </script>
+</body>
+</html>
