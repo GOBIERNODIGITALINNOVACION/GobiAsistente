@@ -7,6 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         .gradient-bg {
@@ -52,6 +53,73 @@
             font-size: 12px;
             color: #e0e0e0;
         }
+        .dashboard-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .dashboard-content {
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            border-radius: 16px;
+            width: 95%;
+            height: 95%;
+            overflow-y: auto;
+            padding: 20px;
+            position: relative;
+        }
+        .chart-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .metric-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .close-dashboard {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .close-dashboard:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-critical { background-color: #ef4444; }
+        .status-warning { background-color: #f59e0b; }
+        .status-good { background-color: #10b981; }
+        .status-excellent { background-color: #059669; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body class="gradient-bg min-h-screen">
@@ -121,6 +189,10 @@
                                 class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105">
                             📊 Generar Análisis COCOMUN
                         </button>
+                        <button id="generateDashboardButton" 
+                                class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105">
+                            📈 Generar Dashboard COCOMUN
+                        </button>
                         <button id="cancelProcessButton" 
                                 class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hidden">
                             ❌ Cancelar Proceso
@@ -153,6 +225,17 @@
                 <div class="bg-white bg-opacity-10 rounded-lg p-6">
                     <div id="summaryContent" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Modal -->
+    <div id="dashboardModal" class="dashboard-modal hidden">
+        <div class="dashboard-content">
+            <button class="close-dashboard" onclick="closeDashboard()">×</button>
+            <div id="dashboardContainer">
+                <h1 class="text-3xl font-bold text-white mb-6 text-center">Dashboard COCOMUN - Análisis PTAR</h1>
+                <div id="dashboardContent"></div>
             </div>
         </div>
     </div>
@@ -203,6 +286,7 @@
         // Event listeners
         document.getElementById('loadFileButton').addEventListener('click', loadFile);
         document.getElementById('generateAnalysisButton').addEventListener('click', () => startProcess('analysis'));
+        document.getElementById('generateDashboardButton').addEventListener('click', generateDashboard);
         document.getElementById('cancelProcessButton').addEventListener('click', cancelCurrentProcess);
         document.getElementById('restartProcessButton').addEventListener('click', restartProcess);
         document.getElementById('ptarSelector').addEventListener('change', handlePtarSelection);
@@ -593,12 +677,14 @@
             const selectedPtar = document.getElementById('ptarSelector').value;
             const analyzeAllCheckbox = document.getElementById('analyzeAllPtar');
             const generateButton = document.getElementById('generateAnalysisButton');
+            const dashboardButton = document.getElementById('generateDashboardButton');
             const ptarInfo = document.getElementById('selectedPtarInfo');
             const ptarDetails = document.getElementById('ptarDetails');
             
             if (selectedPtar) {
                 analyzeAllCheckbox.checked = false;
                 generateButton.disabled = false;
+                dashboardButton.disabled = false;
                 
                 const ptarData = processedData.sheets[selectedPtar];
                 if (ptarData.error) {
@@ -629,6 +715,7 @@
                 ptarInfo.classList.add('hidden');
                 if (!analyzeAllCheckbox.checked) {
                     generateButton.disabled = true;
+                    dashboardButton.disabled = true;
                 }
             }
         }
@@ -638,17 +725,22 @@
             const analyzeAllCheckbox = document.getElementById('analyzeAllPtar');
             const ptarSelector = document.getElementById('ptarSelector');
             const generateButton = document.getElementById('generateAnalysisButton');
+            const dashboardButton = document.getElementById('generateDashboardButton');
             const ptarInfo = document.getElementById('selectedPtarInfo');
             
             if (analyzeAllCheckbox.checked) {
                 ptarSelector.value = '';
                 ptarInfo.classList.add('hidden');
                 generateButton.disabled = false;
+                dashboardButton.disabled = false;
                 generateButton.textContent = '📊 Generar Análisis de Todas las PTARs COCOMUN';
+                dashboardButton.textContent = '📈 Dashboard de Todas las PTARs COCOMUN';
             } else {
                 generateButton.textContent = '📊 Generar Análisis COCOMUN';
+                dashboardButton.textContent = '📈 Generar Dashboard COCOMUN';
                 if (!ptarSelector.value) {
                     generateButton.disabled = true;
+                    dashboardButton.disabled = true;
                 }
             }
         }
@@ -689,11 +781,506 @@
             document.getElementById('dataSummary').classList.remove('hidden');
         }
 
+        // Función para generar dashboard
+        function generateDashboard() {
+            const selectedPtar = document.getElementById('ptarSelector').value;
+            const analyzeAll = document.getElementById('analyzeAllPtar').checked;
+            
+            if (!selectedPtar && !analyzeAll) {
+                alert('Por favor selecciona una PTAR o marca "Analizar todas"');
+                return;
+            }
+
+            let dashboardData = {};
+            
+            if (analyzeAll) {
+                // Generar dashboard para todas las PTARs
+                dashboardData = {
+                    type: 'all',
+                    ptars: processedData.summary.ptarList.map(ptarName => ({
+                        name: ptarName,
+                        data: processedData.sheets[ptarName]
+                    }))
+                };
+            } else {
+                // Generar dashboard para una sola PTAR
+                dashboardData = {
+                    type: 'single',
+                    ptar: {
+                        name: selectedPtar,
+                        data: processedData.sheets[selectedPtar]
+                    }
+                };
+            }
+
+            showDashboard(dashboardData);
+        }
+
+        // Función para mostrar el dashboard
+        function showDashboard(dashboardData) {
+            const modal = document.getElementById('dashboardModal');
+            const content = document.getElementById('dashboardContent');
+            
+            if (dashboardData.type === 'single') {
+                content.innerHTML = generateSinglePtarDashboard(dashboardData.ptar);
+            } else {
+                content.innerHTML = generateAllPtarsDashboard(dashboardData.ptars);
+            }
+            
+            modal.classList.remove('hidden');
+            
+            // Inicializar gráficos después de mostrar el modal
+            setTimeout(() => {
+                initializeCharts(dashboardData);
+            }, 100);
+        }
+
+        // Función para generar dashboard de una sola PTAR
+        function generateSinglePtarDashboard(ptar) {
+            const evalTable = ptar.data.evaluationTable || {};
+            const categories = [
+                { key: 'infraestructura', name: 'Infraestructura Física' },
+                { key: 'equipamiento', name: 'Equipamiento y Maquinaria' },
+                { key: 'documentacion', name: 'Documentación y Normativa' },
+                { key: 'personal', name: 'Personal Técnico y Operativo' },
+                { key: 'suministros', name: 'Suministro y Materiales' },
+                { key: 'registro', name: 'Registro de Seguimiento y Control' },
+                { key: 'mantenimiento', name: 'Historial de Mantenimiento' },
+                { key: 'medicion', name: 'Medición Mensual de Parámetros' },
+                { key: 'capacitacion', name: 'Capacitación del Supervisor al Operador' },
+                { key: 'operador', name: 'El Operador Cuenta Con' }
+            ];
+
+            const averageCompliance = Math.round(Object.values(evalTable).reduce((a, b) => a + b, 0) / Object.keys(evalTable).length);
+            const criticalCount = Object.values(evalTable).filter(val => val < 50).length;
+            const excellentCount = Object.values(evalTable).filter(val => val === 100).length;
+
+            return `
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-white mb-2">${ptar.name}</h2>
+                    <p class="text-gray-300">Fecha del análisis: ${ptar.data.analysisDate}</p>
+                </div>
+
+                <!-- Métricas principales -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                    <div class="metric-card">
+                        <h3 class="text-lg font-semibold text-white mb-2">Cumplimiento Promedio</h3>
+                        <p class="text-3xl font-bold ${averageCompliance >= 80 ? 'text-green-400' : averageCompliance >= 60 ? 'text-yellow-400' : 'text-red-400'}">${averageCompliance}%</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3 class="text-lg font-semibold text-white mb-2">Categorías Críticas</h3>
+                        <p class="text-3xl font-bold text-red-400">${criticalCount}</p>
+                        <p class="text-sm text-gray-300">< 50% cumplimiento</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3 class="text-lg font-semibold text-white mb-2">Categorías Excelentes</h3>
+                        <p class="text-3xl font-bold text-green-400">${excellentCount}</p>
+                        <p class="text-sm text-gray-300">100% cumplimiento</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3 class="text-lg font-semibold text-white mb-2">Total Categorías</h3>
+                        <p class="text-3xl font-bold text-blue-400">${categories.length}</p>
+                        <p class="text-sm text-gray-300">Evaluadas</p>
+                    </div>
+                </div>
+
+                <!-- Gráfico circular de cumplimiento general -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="chart-container">
+                        <h3 class="text-xl font-semibold text-white mb-4">Distribución de Cumplimiento</h3>
+                        <canvas id="complianceChart" width="400" height="400"></canvas>
+                    </div>
+                    
+                    <!-- Gráfico de barras por categoría -->
+                    <div class="chart-container">
+                        <h3 class="text-xl font-semibold text-white mb-4">Cumplimiento por Categoría</h3>
+                        <canvas id="categoryChart" width="400" height="400"></canvas>
+                    </div>
+                </div>
+
+                <!-- Detalle de categorías -->
+                <div class="chart-container">
+                    <h3 class="text-xl font-semibold text-white mb-4">Detalle de Evaluaciones</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${categories.map(cat => {
+                            const value = evalTable[cat.key] || 0;
+                            const status = value === 0 ? 'critical' : value < 50 ? 'critical' : value < 80 ? 'warning' : value === 100 ? 'excellent' : 'good';
+                            const statusText = value === 0 ? 'Sin datos' : value < 50 ? 'Crítico' : value < 80 ? 'Necesita mejora' : value === 100 ? 'Excelente' : 'Bueno';
+                            
+                            return `
+                                <div class="bg-white bg-opacity-5 rounded-lg p-4 border border-white border-opacity-10">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <h4 class="text-white font-medium text-sm">${cat.name}</h4>
+                                        <span class="text-lg font-bold ${value >= 80 ? 'text-green-400' : value >= 50 ? 'text-yellow-400' : 'text-red-400'}">${value}%</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="status-indicator status-${status}"></span>
+                                        <span class="text-gray-300 text-sm">${statusText}</span>
+                                    </div>
+                                    <div class="w-full bg-gray-600 rounded-full h-2 mt-2">
+                                        <div class="bg-gradient-to-r ${value >= 80 ? 'from-green-500 to-green-400' : value >= 50 ? 'from-yellow-500 to-yellow-400' : 'from-red-500 to-red-400'} h-2 rounded-full" style="width: ${value}%"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Función para generar dashboard de todas las PTARs
+        function generateAllPtarsDashboard(ptars) {
+            const validPtars = ptars.filter(ptar => !ptar.data.error);
+            const totalPtars = validPtars.length;
+            
+            // Calcular estadísticas generales
+            let totalAverage = 0;
+            let totalCritical = 0;
+            let totalExcellent = 0;
+            
+            const categoryAverages = {};
+            const ptarSummary = validPtars.map(ptar => {
+                const evalTable = ptar.data.evaluationTable || {};
+                const average = Math.round(Object.values(evalTable).reduce((a, b) => a + b, 0) / Object.keys(evalTable).length);
+                const critical = Object.values(evalTable).filter(val => val < 50).length;
+                const excellent = Object.values(evalTable).filter(val => val === 100).length;
+                
+                totalAverage += average;
+                totalCritical += critical;
+                totalExcellent += excellent;
+                
+                // Acumular promedios por categoría
+                Object.keys(evalTable).forEach(key => {
+                    if (!categoryAverages[key]) categoryAverages[key] = [];
+                    categoryAverages[key].push(evalTable[key]);
+                });
+                
+                return {
+                    name: ptar.name,
+                    average,
+                    critical,
+                    excellent,
+                    evalTable
+                };
+            });
+
+            const overallAverage = Math.round(totalAverage / totalPtars);
+
+            return `
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-white mb-2">Dashboard General - Todas las PTARs</h2>
+                    <p class="text-gray-300">Total de plantas analizadas: ${totalPtars}</p>
+                </div>
+
+                <!-- Métricas generales -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                    <div class="metric-card">
+                        <h3 class="text-lg font-semibold text-white mb-2">Cumplimiento Promedio</h3>
+                        <p class="text-3xl font-bold ${overallAverage >= 80 ? 'text-green-400' : overallAverage >= 60 ? 'text-yellow-400' : 'text-red-400'}">${overallAverage}%</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3 class="text-lg font-semibold text-white mb-2">Total PTARs</h3>
+                        <p class="text-3xl font-bold text-blue-400">${totalPtars}</p>
+                        <p class="text-sm text-gray-300">Analizadas</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3 class="text-lg font-semibold text-white mb-2">Categorías Críticas</h3>
+                        <p class="text-3xl font-bold text-red-400">${totalCritical}</p>
+                        <p class="text-sm text-gray-300">Total críticas</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3 class="text-lg font-semibold text-white mb-2">Categorías Excelentes</h3>
+                        <p class="text-3xl font-bold text-green-400">${totalExcellent}</p>
+                        <p class="text-sm text-gray-300">Total excelentes</p>
+                    </div>
+                </div>
+
+                <!-- Gráficos comparativos -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="chart-container">
+                        <h3 class="text-xl font-semibold text-white mb-4">Comparativo de PTARs</h3>
+                        <canvas id="ptarComparisonChart" width="400" height="400"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3 class="text-xl font-semibold text-white mb-4">Promedios por Categoría</h3>
+                        <canvas id="categoryAverageChart" width="400" height="400"></canvas>
+                    </div>
+                </div>
+
+                <!-- Ranking de PTARs -->
+                <div class="chart-container">
+                    <h3 class="text-xl font-semibold text-white mb-4">Ranking de PTARs por Cumplimiento</h3>
+                    <div class="space-y-3">
+                        ${ptarSummary
+                            .sort((a, b) => b.average - a.average)
+                            .map((ptar, index) => `
+                                <div class="flex items-center justify-between bg-white bg-opacity-5 rounded-lg p-4 border border-white border-opacity-10">
+                                    <div class="flex items-center">
+                                        <span class="text-2xl font-bold text-gray-400 mr-4">#${index + 1}</span>
+                                        <div>
+                                            <h4 class="text-white font-medium">${ptar.name}</h4>
+                                            <p class="text-sm text-gray-300">Críticas: ${ptar.critical} | Excelentes: ${ptar.excellent}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-2xl font-bold ${ptar.average >= 80 ? 'text-green-400' : ptar.average >= 60 ? 'text-yellow-400' : 'text-red-400'}">${ptar.average}%</span>
+                                        <div class="w-32 bg-gray-600 rounded-full h-2 mt-1">
+                                            <div class="bg-gradient-to-r ${ptar.average >= 80 ? 'from-green-500 to-green-400' : ptar.average >= 60 ? 'from-yellow-500 to-yellow-400' : 'from-red-500 to-red-400'} h-2 rounded-full" style="width: ${ptar.average}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Función para cerrar el dashboard
+        function closeDashboard() {
+            document.getElementById('dashboardModal').classList.add('hidden');
+        }
+
+        // Función para inicializar gráficos
+        function initializeCharts(dashboardData) {
+            if (dashboardData.type === 'single') {
+                initializeSinglePtarCharts(dashboardData.ptar);
+            } else {
+                initializeAllPtarsCharts(dashboardData.ptars);
+            }
+        }
+
+        // Función para inicializar gráficos de una sola PTAR
+        function initializeSinglePtarCharts(ptar) {
+            const evalTable = ptar.data.evaluationTable || {};
+            
+            // Gráfico circular de cumplimiento
+            const complianceCtx = document.getElementById('complianceChart').getContext('2d');
+            const values = Object.values(evalTable);
+            const critical = values.filter(v => v < 50).length;
+            const warning = values.filter(v => v >= 50 && v < 80).length;
+            const good = values.filter(v => v >= 80 && v < 100).length;
+            const excellent = values.filter(v => v === 100).length;
+
+            new Chart(complianceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Crítico (<50%)', 'Necesita mejora (50-79%)', 'Bueno (80-99%)', 'Excelente (100%)'],
+                    datasets: [{
+                        data: [critical, warning, good, excellent],
+                        backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#059669'],
+                        borderWidth: 2,
+                        borderColor: '#1f2937'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de barras por categoría
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            const categories = [
+                { key: 'infraestructura', name: 'Infraestructura' },
+                { key: 'equipamiento', name: 'Equipamiento' },
+                { key: 'documentacion', name: 'Documentación' },
+                { key: 'personal', name: 'Personal' },
+                { key: 'suministros', name: 'Suministros' },
+                { key: 'registro', name: 'Registro' },
+                { key: 'mantenimiento', name: 'Mantenimiento' },
+                { key: 'medicion', name: 'Medición' },
+                { key: 'capacitacion', name: 'Capacitación' },
+                { key: 'operador', name: 'Operador' }
+            ];
+
+            new Chart(categoryCtx, {
+                type: 'bar',
+                data: {
+                    labels: categories.map(cat => cat.name),
+                    datasets: [{
+                        label: 'Cumplimiento %',
+                        data: categories.map(cat => evalTable[cat.key] || 0),
+                        backgroundColor: categories.map(cat => {
+                            const val = evalTable[cat.key] || 0;
+                            return val >= 80 ? '#10b981' : val >= 50 ? '#f59e0b' : '#ef4444';
+                        }),
+                        borderColor: '#1f2937',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                color: '#ffffff'
+                            },
+                            grid: {
+                                color: '#374151'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#ffffff'
+                            },
+                            grid: {
+                                color: '#374151'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Función para inicializar gráficos de todas las PTARs
+        function initializeAllPtarsCharts(ptars) {
+            const validPtars = ptars.filter(ptar => !ptar.data.error);
+            
+            // Gráfico comparativo de PTARs
+            const comparisonCtx = document.getElementById('ptarComparisonChart').getContext('2d');
+            const ptarData = validPtars.map(ptar => {
+                const evalTable = ptar.data.evaluationTable || {};
+                return {
+                    name: ptar.name,
+                    average: Math.round(Object.values(evalTable).reduce((a, b) => a + b, 0) / Object.keys(evalTable).length)
+                };
+            });
+
+            new Chart(comparisonCtx, {
+                type: 'bar',
+                data: {
+                    labels: ptarData.map(p => p.name.length > 15 ? p.name.substring(0, 15) + '...' : p.name),
+                    datasets: [{
+                        label: 'Cumplimiento Promedio %',
+                        data: ptarData.map(p => p.average),
+                        backgroundColor: ptarData.map(p => p.average >= 80 ? '#10b981' : p.average >= 60 ? '#f59e0b' : '#ef4444'),
+                        borderColor: '#1f2937',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                color: '#ffffff'
+                            },
+                            grid: {
+                                color: '#374151'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#ffffff',
+                                maxRotation: 45
+                            },
+                            grid: {
+                                color: '#374151'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de promedios por categoría
+            const categoryAverageCtx = document.getElementById('categoryAverageChart').getContext('2d');
+            const categories = [
+                { key: 'infraestructura', name: 'Infraestructura' },
+                { key: 'equipamiento', name: 'Equipamiento' },
+                { key: 'documentacion', name: 'Documentación' },
+                { key: 'personal', name: 'Personal' },
+                { key: 'suministros', name: 'Suministros' },
+                { key: 'registro', name: 'Registro' },
+                { key: 'mantenimiento', name: 'Mantenimiento' },
+                { key: 'medicion', name: 'Medición' },
+                { key: 'capacitacion', name: 'Capacitación' },
+                { key: 'operador', name: 'Operador' }
+            ];
+
+            const categoryAverages = {};
+            categories.forEach(cat => {
+                const values = validPtars.map(ptar => ptar.data.evaluationTable[cat.key] || 0);
+                categoryAverages[cat.key] = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+            });
+
+            new Chart(categoryAverageCtx, {
+                type: 'radar',
+                data: {
+                    labels: categories.map(cat => cat.name),
+                    datasets: [{
+                        label: 'Promedio General',
+                        data: categories.map(cat => categoryAverages[cat.key]),
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        borderColor: '#3b82f6',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                color: '#ffffff',
+                                backdropColor: 'transparent'
+                            },
+                            grid: {
+                                color: '#374151'
+                            },
+                            angleLines: {
+                                color: '#374151'
+                            },
+                            pointLabels: {
+                                color: '#ffffff'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
         // Iniciar proceso
         async function startProcess(type) {
             cancelProcess = false;
             
             document.getElementById('generateAnalysisButton').classList.add('hidden');
+            document.getElementById('generateDashboardButton').classList.add('hidden');
             document.getElementById('cancelProcessButton').classList.remove('hidden');
             document.getElementById('progressSection').classList.remove('hidden');
             document.getElementById('loadingSpinner').classList.remove('hidden');
@@ -1080,11 +1667,14 @@
             document.getElementById('ptarSelector').value = '';
             document.getElementById('analyzeAllPtar').checked = false;
             document.getElementById('generateAnalysisButton').disabled = true;
+            document.getElementById('generateDashboardButton').disabled = true;
             document.getElementById('generateAnalysisButton').textContent = '📊 Generar Análisis COCOMUN';
+            document.getElementById('generateDashboardButton').textContent = '📈 Generar Dashboard COCOMUN';
             document.getElementById('progressSection').classList.add('hidden');
             document.getElementById('selectedPtarInfo').classList.add('hidden');
             document.getElementById('debugInfo').classList.add('hidden');
             document.getElementById('generateAnalysisButton').classList.remove('hidden');
+            document.getElementById('generateDashboardButton').classList.remove('hidden');
             document.getElementById('restartProcessButton').classList.add('hidden');
             updateProgressBar(0, '');
         }
