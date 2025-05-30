@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema ITL PEMEX - Análisis y Dictamen PDF</title>
+    <link href="https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 50%, #581c87 100%);
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .success-message {
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .field-display {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid #3b82f6;
+        }
+        .pdf-button {
+            background: linear-gradient(to right, #1e40af, #3730a3);
+            transition: all 0.3s ease;
+        }
+        .pdf-button:hover {
+            background: linear-gradient(to right, #1e3a8a, #312e81);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(30, 64, 175, 0.3);
+        }
+        .clear-button {
+            background: linear-gradient(to right, #dc2626, #991b1b);
+            transition: all 0.3s ease;
+        }
+        .clear-button:hover {
+            background: linear-gradient(to right, #b91c1c, #7f1d1d);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(220, 38, 38, 0.3);
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .accordion-content.open {
+            max-height: 1000px;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="text-center mb-8">
+            <div class="flex justify-center items-center mb-4">
+                <div class="bg-white rounded-full p-3 mr-4">
+                    <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 2a1 1 0 00 0 2h2a1 1 0 00 0-2H9z"/>
+                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2h.01c0 1.1.9 2 2 2v6a2 2 0 01-2 2H6a4 4 0 01-4-4V5zm10-2a2 2 0 012 2v6a2 2 0 01-2 2h-.01a2 2 0 01-2-2V5a2 2 0 012-2z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <h1 class="text-4xl font-bold text-white">Sistema ITL - PEMEX</h1>
+            </div>
+            <p class="text-white opacity-90 text-lg">Análisis y Dictamen de Accidentes de Trabajo</p>
+            <p class="text-blue-200 text-sm mt-2">✨ Generación de PDF profesional conforme a DTO-PACH-RL-03 ✨</p>
+        </div>
+
+        <div class="glass-effect rounded-3xl p-8 shadow-2xl mb-8">
+            <div class="mb-8">
+                <h2 class="text-3xl font-semibold text-white mb-6 flex items-center">
+                    <span class="bg-blue-500 rounded-full p-2 mr-3">📁</span>
+                    Cargar y Analizar Formularios ITL
+                </h2>
+                <div class="bg-white bg-opacity-10 rounded-xl p-6">
+                    <div class="mb-6 p-4 bg-blue-500 bg-opacity-20 border border-blue-500 rounded-lg">
+                        <h4 class="text-blue-200 font-semibold mb-2">✅ Azure GPT-4o Configurado</h4>
+                        <p class="text-blue-200 text-sm">Sistema listo para analizar PDFs y generar dictámenes en PDF</p>
+                        <p class="text-blue-300 text-xs mt-1">Azure: cuente8n8.openai.azure.com</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-white text-sm font-medium mb-2">Seleccionar archivo PDF:</label>
+                        <input type="file" id="pdfFile" accept=".pdf" 
+                               class="block w-full text-white bg-white bg-opacity-20 rounded-lg p-4 mb-4
+                                      file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0
+                                      file:text-sm file:font-semibold file:bg-blue-600 file:text-white
+                                      hover:file:bg-blue-700 transition-all duration-200">
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <button id="extractButton" 
+                                class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 
+                                       text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 
+                                       transform hover:scale-105 shadow-lg">
+                            🔍 Analizar PDF
+                        </button>
+                        
+                        <button id="downloadPDFButton" 
+                                class="w-full pdf-button text-white px-8 py-4 rounded-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled>
+                            📄 Generar y Descargar PDF
+                        </button>
+                        
+                        <button id="clearButton" 
+                                class="w-full clear-button text-white px-8 py-4 rounded-xl font-semibold text-lg">
+                            🗑️ Limpiar y Subir Otro
+                        </button>
+                    </div>
+                    
+                    <div id="loadingSection" class="hidden mt-6 text-center">
+                        <div class="loading-spinner mx-auto mb-4"></div>
+                        <p class="text-white text-lg" id="loadingText">Procesando formulario...</p>
+                        <p class="text-blue-200 text-sm">Esto puede tomar unos segundos</p>
+                    </div>
+
+                    <div id="status" class="mt-6 p-4 rounded-lg hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultSection" class="glass-effect rounded-3xl p-8 shadow-2xl hidden">
+            <h2 class="text-3xl font-semibold text-white mb-6 flex items-center">
+                <span class="bg-green-500 rounded-full p-2 mr-3">✅</span>
+                Resultados del Análisis
+            </h2>
+            <div id="extractedData" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
+            
+            <div class="bg-white bg-opacity-10 rounded-xl p-6">
+                <h3 class="text-xl font-semibold text-white mb-4">📊 Estado de los Formularios:</h3>
+                <div id="processStatus" class="space-y-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración y variables globales
+        let extractedData = [];
+        let analysisResults = [];
+        let currentAccidentId = 1;
+
+        // Configuración de Azure OpenAI (GPT-4o)
+        const AZURE_CONFIG = {
+            endpoint: "https://cuente8n8.openai.azure.com/",
+            apiKey: "4C0mfORSac5WlA2LXBWDXkxI6WF8f0HENRpytmkObBRMlnjLkTjaJQQJ99BEACYeBjFXJ3w3AAABACOGixsB",
+            deployment: "gpt-4oromanpemex",
+            apiVersion: "2024-12-01-preview"
+        };
+
+        // Configuración de PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // Prompt de análisis
+        const ANALYSIS_PROMPT = `
+**Contexto**: Eres un analista experto en relaciones laborales y seguridad ocupacional en Petróleos Mexicanos (Pemex), con más de 10 años de experiencia en análisis de accidentes laborales y cumplimiento normativo. Tu tarea es revisar solicitudes de accidentes de trabajo (formatos ITL-1, ITL-2, ITL-3, ITL-4, ITL-5, ITL-T) conforme al documento DTO-PACH-RL-03, la Ley Federal del Trabajo (LFT), el Contrato Colectivo de Trabajo (CCT), el Reglamento de Seguridad e Higiene de Pemex (RSHPMEPS), y el Sistema de Avisos de Accidentes de Trabajo (SIAAT). Debes emitir un dictamen sustentado, profesional y detallado sobre si cada incidente es un "accidente de trabajo" o "no de trabajo", incluso si existe un ITL-4, y recomendar acciones específicas con plazos. Identifica incumplimientos normativos con evidencia y sugiere medidas preventivas basadas en el artículo 24 del RSHPMEPS.
+
+**Instrucciones**:
+1. **Revisión de Documentos**:
+   - Analiza los formatos ITL proporcionados, verificando campos completos, firmas y plazos (punto II.1.2 DTO-PACH-RL-03).
+   - Confirma entrega del ITL-1 en 8 horas (punto II.1.9), ITL-3 en 24 horas (punto II.1.15), y notificación al SIAAT en 72 horas (punto II.1.17).
+   - Identifica inconsistencias entre relatos (punto II.1.19).
+   - Valida pruebas para ITL-T (punto II.1.24, clause 114 CCT).
+
+2. **Evaluación según Normatividad**:
+   - Verifica si cumple con el artículo 474 LFT (accidente en centro de trabajo, actividades laborales, traslado).
+   - Revisa excluyentes del artículo 488 LFT (embriaguez, autolesión, imprudencia grave).
+   - Evalúa la actividad (rutinaria/asignada) y su relación con la categoría del trabajador (punto II.2).
+   - Aplica cláusulas 114 (traslado), 115 (centro de trabajo), 123 (accidentes laborales) CCT para sindicalizados, o artículo 66 RTPC para confianza.
+   - Analiza condiciones/actos inseguros (punto II.1.15, artículo 504 LFT, artículo 24 RSHPMEPS).
+
+3. **Criterios de Calificación**:
+   - **Accidente de trabajo**: Incidente en centro de trabajo o traslado, sin excluyentes del artículo 488.
+   - **No accidente de trabajo**: Aplica excluyente del artículo 488.
+   - **Suspensión**: Inconsistencias o datos insuficientes (punto II.1.3).
+   - **Traslado**: Cumple cláusula 114 CCT con pruebas.
+   - **Reconsideración**: Nuevas pruebas justifican revisión (punto II.1.22).
+
+4. **Dictamen Sustentado**:
+   - Resume hechos: fecha, lugar, mecanismo, lesiones, actividad, categoría.
+   - Explica calificación, citando DTO-PACH-RL-03 (puntos específicos), LFT (artículos), CCT (cláusulas), RSHPMEPS (artículos).
+   - Detalla consistencia de ITL-1, ITL-2, ITL-3; evalúa ITL-4 if exists; nota ausencia de ITL-5/ITL-T.
+   - Identifica incumplimientos with evidence (e.g., plazos, campos incompletos).
+   - Recomienda acciones with plazos: emitir ITL-4, notificar SIAAT, investigar, medidas preventivas (artículo 24 RSHPMEPS).
+
+5. **Medidas Preventivas**:
+   - Corrige condiciones inseguras (punto II.1.7, artículo 24 RSHPMEPS), e.g., reparar pisos en 30 días.
+   - Propón capacitación en plazos de ITL y reporte de riesgos (por trimestre).
+   - Sugiere auditorías de SIAAT (anuales).
+
+6. **Formato de Respuesta**:
+   - **Resumen**: Describe incidente (fecha, lugar, lesión, actividad).
+   - **Análisis**:
+     - ITL-1: Cumplimiento, relato, plazos (punto II.1.9).
+     - ITL-2: Diagnóstico, consistencia, intoxicación (punto II.1.11).
+     - ITL-3: Causas, condiciones/actos inseguros (punto II.1.15).
+     - ITL-4: Calificación, notificación SIAAT (punto II.1.18).
+     - ITL-5: Costos, incapacidad (punto II.1.14).
+     - ITL-T: Traslado, pruebas (punto II.1.24).
+   - **Dictamen**: Accidente de trabajo / No accidente / Suspensión / Traslado.
+   - **Justificación**: Cita normativa, explica responsabilidad (artículo 504 LFT).
+   - **Incumplimientos**: Lista con evidencia.
+   - **Recomendaciones**: Lista de acciones con plazos (como texto, no array).
+
+7. **Consideraciones**:
+   - Si faltan datos, suspende calificación (punto II.1.19) y recomienda recabar ITL.
+   - Si existe ITL-4, evalúa su validez (punto II.1.22).
+   - Responde en JSON estructurado, asegurando que todos los campos (Resumen, Dictamen, Justificacion, Incumplimientos, Recomendaciones) sean strings:
+{
+  "Resumen": "...",
+  "Analisis": {
+    "ITL-1": "...",
+    "ITL-2": "...",
+    "ITL-3": "...",
+    "ITL-4": "...",
+    "ITL-5": "...",
+    "ITL-T": "..."
+  },
+  "Dictamen": "...",
+  "Justificacion": "...",
+  "Incumplimientos": "...",
+  "Recomendaciones": "..."
+}
+`;
+
+        // Event Listeners
+        document.getElementById('extractButton').addEventListener('click', extractDataFromPDF);
+        document.getElementById('downloadPDFButton').addEventListener('click', downloadPDF);
+        document.getElementById('clearButton').addEventListener('click', clearForm);
+
+        // Normalizar nombres para evitar duplicados
+        function normalizeName(name) {
+            if (!name) return '';
+            return name.toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        // Corregir errores de OCR comunes
+        function correctOCRText(text) {
+            const corrections = {
+                'Rasillo': 'Pasillo',
+                'articulo': 'artículo',
+                'lesono': 'lesionó',
+                'trabujador': 'trabajador',
+                'héber': 'haber',
+                'oculrido': 'ocurrido',
+                'evenly': 'evento',
+                'caminanc': 'caminando',
+                'irregularidadi': 'irregularidades',
+                'pers': 'pero',
+                'compaf̃ero': 'compañero',
+                'doetimento': 'documento',
+                'Pesterament': 'Posteriormente',
+                'olmica': 'clínica',
+                'Hayzo': 'mayo',
+                'truslada': 'trasladan',
+                'Cantal torle': 'Central Norte',
+                'seucio': 'servicio',
+                'Urgacion': 'Urgencias',
+                'nes': 'me',
+                'medico': 'médico',
+                'a to carl': 'a consulta',
+                'enúame': 'enviarme',
+                'ex to': 'RX',
+                'urgencyon': 'urgencias',
+                'Éguince': 'Esguince',
+                'caucal': 'codo',
+                'primor quado': 'primer grado',
+                'posturmentes': 'posteriormente',
+                'enúan': 'envían',
+                'Otopéta': 'Ortopedia',
+                'valorandanes': 'valorándome',
+                'ampaar donos': 'me dan incapacidad de',
+                'dian mon': 'días más',
+                'teche': 'fecha',
+                'juale doloi': 'igual dolor',
+                'jete': 'jefe',
+                'acciante': 'accidente',
+                'fuel': 'fue',
+                'tic': 'Lic',
+                'Juar Sonchez Ahdana': 'Juan Sánchez Aldana'
+            };
+            let corrected = text;
+            for (const [wrong, right] of Object.entries(corrections)) {
+                corrected = corrected.replace(new RegExp(wrong, 'gi'), right);
+            }
+            return corrected;
+        }
+
+        // Función para limpiar el formulario
+        function clearForm() {
+            extractedData = [];
+            analysisResults = [];
+            document.getElementById('pdfFile').value = '';
+            document.getElementById('downloadPDFButton').disabled = true;
+            document.getElementById('resultSection').classList.add('hidden');
+            document.getElementById('status').classList.add('hidden');
+            showStatus('🗑️ Formulario limpiado. Sube un nuevo PDF.', 'success');
+        }
+
+        // Función principal para extraer datos del PDF
+        async function extractDataFromPDF() {
+            const fileInput = document.getElementById('pdfFile');
+            const loadingSection = document.getElementById('loadingSection');
+            const status = document.getElementById('status');
+            const resultSection = document.getElementById('resultSection');
+            const loadingText = document.getElementById('loadingText');
+
+            if (!fileInput.files.length) {
+                showStatus('Por favor selecciona un archivo PDF', 'error');
+                return;
+            }
+
+            try {
+                loadingSection.classList.remove('hidden');
+                status.classList.add('hidden');
+                resultSection.classList.add('hidden');
+                extractedData = [];
+                analysisResults = [];
+
+                const file = fileInput.files[0];
+                loadingText.textContent = 'Leyendo archivo PDF...';
+
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                let fullText = '';
+                const totalPages = pdf.numPages;
+
+                for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+                    loadingText.textContent = `Procesando página ${pageNum} de ${totalPages}...`;
+                    const page = await pdf.getPage(pageNum);
+                    const textContent = await page.getTextContent();
+                    let pageText = '';
+                    let lastY = null;
+
+                    textContent.items.forEach((item, index) => {
+                        if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
+                            pageText += '\n';
+                        }
+                        pageText += item.str;
+                        if (index < textContent.items.length - 1) {
+                            const nextItem = textContent.items[index + 1];
+                            const currentX = item.transform[4] + item.width;
+                            const nextX = nextItem.transform[4];
+                            if (nextX - currentX > 5) {
+                                pageText += ' ';
+                            }
+                        }
+                        lastY = item.transform[5];
+                    });
+
+                    fullText += pageText + '\n\n';
+                }
+
+                fullText = correctOCRText(fullText);
+
+                if (!fullText.trim()) {
+                    loadingText.textContent = 'PDF escaneado detectado - Procesando con Azure GPT-4o...';
+                    const cases = await processWithAzureGPT4o(pdf, file.name);
+                    extractedData = cases;
+                } else {
+                    loadingText.textContent = 'Extrayendo datos con IA avanzada...';
+                    extractedData = extractDataWithAdvancedPatterns(fullText, file.name);
+                }
+
+                if (extractedData.length === 0) {
+                    loadingText.textContent = 'Intentando con patrones de fallback...';
+                    extractedData = extractWithSimplePatterns(fullText, file.name);
+                }
+
+                if (extractedData.length === 0) {
+                    throw new Error('No se detectaron casos válidos en el PDF');
+                }
+
+                currentAccidentId = Math.floor(Math.random() * 9000) + 1000;
+
+                loadingText.textContent = 'Analizando casos con normatividad...';
+                await analyzeWithPrompt(fullText);
+
+                if (analysisResults.length === 0) {
+                    throw new Error('No se generaron análisis válidos');
+                }
+
+                displayResults();
+                const legibleCases = analysisResults.filter(result => 
+                    result.analysis.Dictamen !== 'Suspensión' || 
+                    result.analysis.Resumen !== `No se pudo analizar el caso ${result.case}`
+                ).length;
+                if (legibleCases === 0) {
+                    showStatus(`⚠️ Todos los ${analysisResults.length} caso(s) son ilegibles. El PDF incluirá suspensiones.`, 'warning');
+                } else {
+                    showStatus(`✅ Análisis completado exitosamente. ${legibleCases} caso(s) legible(s) de ${analysisResults.length} detectado(s).`, 'success');
+                }
+                document.getElementById('downloadPDFButton').disabled = false;
+
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus(`❌ Error al procesar: ${error.message}`, 'error');
+            } finally {
+                loadingSection.classList.add('hidden');
+            }
+        }
+
+        // Función para procesar PDF escaneado con Azure GPT-4o
+        async function processWithAzureGPT4o(pdf, filename) {
+            const casesMap = new Map();
+            let hasMeaningfulData = false;
+
+            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                try {
+                    const page = await pdf.getPage(pageNum);
+                    const viewport = page.getViewport({ scale: 3.0 });
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    await page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    }).promise;
+
+                    const imageData = canvas.toDataURL('image/png').split(',')[1];
+                    const pageData = await callAzureOpenAI(imageData, pageNum, 'extract');
+                    const flattenedData = flattenAzureResponse(pageData, pageNum);
+
+                    if (Object.keys(flattenedData).length > 1) {
+                        hasMeaningfulData = true;
+                    }
+
+                    const name = flattenedData.Nombre || extractNameFromFilename(filename) || `Caso_${pageNum}`;
+                    const normalizedName = normalizeName(name);
+                    const ficha = flattenedData.Ficha || `Ficha_${pageNum}`;
+
+                    const caseKey = `${normalizedName}_${ficha}`;
+                    if (!casesMap.has(caseKey)) {
+                        casesMap.set(caseKey, { case: name, data: { Ficha: ficha, Nombre: name } });
+                    }
+
+                    Object.assign(casesMap.get(caseKey).data, flattenedData);
+                } catch (error) {
+                    console.error(`Error procesando página ${pageNum}:`, error);
+                }
+            }
+
+            const cases = Array.from(casesMap.values());
+            if (cases.length === 0 || !hasMeaningfulData) {
+                const name = extractNameFromFilename(filename) || 'Caso Desconocido';
+                cases.push({
+                    case: name,
+                    data: { Nombre: name, Ficha: 'Desconocida' }
+                });
+            }
+
+            return cases;
+        }
+
+        // Extraer nombre del archivo como fallback
+        function extractNameFromFilename(filename) {
+            const patterns = [
+                /Enriqueta del R[ií]o Pacheco/i,
+                /Roberto Daniel Manzo Granados/i,
+                /Ofelia Garc[íi]a Canseco/i,
+                /Jos[ée] Antonio Guti[ée]rrez Cordero/i
+            ];
+            for (const pattern of patterns) {
+                const match = filename.match(pattern);
+                if (match) {
+                    return match[0];
+                }
+            }
+            return null;
+        }
+
+        // Función para analizar con el prompt
+        async function analyzeWithPrompt(fullText) {
+            for (const caseData of extractedData) {
+                try {
+                    const prompt = `${ANALYSIS_PROMPT}\n\n**Datos del Caso**:\n${JSON.stringify(caseData.data, null, 2)}\n\n**Texto Completo del PDF (primeros 5000 caracteres)**:\n${fullText.substring(0, 5000)}`;
+                    const response = await callAzureOpenAI(null, 0, 'analyze', prompt);
+                    if (!response.Resumen || !response.Dictamen) {
+                        throw new Error('Análisis incompleto');
+                    }
+                    // Asegurar que todos los campos sean strings
+                    const normalizedResponse = {
+                        Resumen: String(response.Resumen || 'No disponible'),
+                        Analisis: response.Analisis || {
+                            "ITL-1": "No disponible",
+                            "ITL-2": "No disponible",
+                            "ITL-3": "No disponible",
+                            "ITL-4": "No disponible",
+                            "ITL-5": "No disponible",
+                            "ITL-T": "No disponible"
+                        },
+                        Dictamen: String(response.Dictamen || 'No disponible'),
+                        Justificacion: String(response.Justificacion || 'No disponible'),
+                        Incumplimientos: typeof response.Incumplimientos === 'string' ? response.Incumplimientos : 
+                            (Array.isArray(response.Incumplimientos) ? response.Incumplimientos.join('\n') : 'Ninguno'),
+                        Recomendaciones: typeof response.Recomendaciones === 'string' ? response.Recomendaciones : 
+                            (Array.isArray(response.Recomendaciones) ? response.Recomendaciones.join('\n') : 'Ninguna')
+                    };
+                    analysisResults.push({ case: caseData.case, analysis: normalizedResponse });
+                } catch (error) {
+                    console.error(`Error analizando caso ${caseData.case}:`, error);
+                    analysisResults.push({
+                        case: caseData.case,
+                        analysis: {
+                            Resumen: `No se pudo analizar el caso ${caseData.case}`,
+                            Analisis: {
+                                "ITL-1": "No disponible",
+                                "ITL-2": "No disponible",
+                                "ITL-3": "No disponible",
+                                "ITL-4": "No disponible",
+                                "ITL-5": "No disponible",
+                                "ITL-T": "No disponible"
+                            },
+                            Dictamen: "Suspensión",
+                            Justificacion: `Error en el análisis: ${error.message} (punto II.1.19 DTO-PACH-RL-03)`,
+                            Incumplimientos: "Datos insuficientes",
+                            Recomendaciones: "Recabar ITL completos y legibles, o solicitar transcripción manual"
+                        }
+                    });
+                }
+            }
+        }
+
+        // Función para generar y descargar PDF
+        function downloadPDF() {
+            if (!analysisResults.length) {
+                showStatus('No hay datos para generar el PDF', 'error');
+                return;
+            }
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                const pageWidth = doc.internal.pageSize.width;
+                const pageHeight = doc.internal.pageSize.height;
+                const margin = 20;
+                let yOffset = margin;
+
+                // Encabezado
+                doc.setFontSize(14);
+                doc.setTextColor(0, 48, 135); // Azul Pemex
+                doc.text('Dictamen de Análisis de Accidentes de Trabajo', pageWidth / 2, yOffset, { align: 'center' });
+                yOffset += 10;
+                doc.setFontSize(10);
+                doc.setTextColor(0);
+                doc.text(`Fecha: 30 de mayo de 2025, 10:43 AM CST`, pageWidth / 2, yOffset, { align: 'center' });
+                yOffset += 5;
+                doc.text(`No. ITL-DICTAMEN-${currentAccidentId}`, pageWidth / 2, yOffset, { align: 'center' });
+                yOffset += 10;
+
+                // Índice
+                if (analysisResults.length > 1) {
+                    doc.setFontSize(12);
+                    doc.setTextColor(0, 48, 135);
+                    doc.text('Índice', margin, yOffset);
+                    yOffset += 5;
+                    let pageIndex = 2;
+                    analysisResults.forEach((result, index) => {
+                        doc.setFontSize(10);
+                        doc.setTextColor(0);
+                        doc.text(`${index + 1}. ${result.case} - Página ${pageIndex}`, margin + 5, yOffset);
+                        yOffset += 5;
+                        pageIndex++;
+                    });
+                    yOffset += 10;
+                    if (yOffset > pageHeight - margin) {
+                        doc.addPage();
+                        yOffset = margin;
+                    }
+                }
+
+                // Contenido por caso
+                analysisResults.forEach((result, index) => {
+                    if (yOffset > pageHeight - margin - 50) {
+                        doc.addPage();
+                        yOffset = margin;
+                    }
+
+                    doc.setFontSize(12);
+                    doc.setTextColor(0, 48, 135);
+                    doc.text(`Caso ${result.case}`, margin, yOffset);
+                    yOffset += 7;
+
+                    const analysis = result.analysis;
+                    const sections = [
+                        { title: 'Resumen', content: analysis.Resumen || 'No disponible' },
+                        {
+                            title: 'Análisis',
+                            table: Object.entries(analysis.Analisis || {})
+                                .filter(([_, value]) => value && value !== 'No disponible')
+                                .map(([key, value]) => ({ Formato: key, Detalle: value }))
+                        },
+                        { title: 'Dictamen', content: analysis.Dictamen || 'No disponible' },
+                        { title: 'Justificación', content: analysis.Justificacion || 'No disponible' },
+                        { title: 'Incumplimientos', content: analysis.Incumplimientos || 'Ninguno' },
+                        { title: 'Recomendaciones', content: analysis.Recomendaciones || 'Ninguna' }
+                    ];
+
+                    sections.forEach(section => {
+                        if (yOffset > pageHeight - margin - 20) {
+                            doc.addPage();
+                            yOffset = margin;
+                        }
+                        doc.setFontSize(10);
+                        doc.setTextColor(0, 48, 135);
+                        doc.text(section.title, margin, yOffset);
+                        yOffset += 5;
+                        doc.setTextColor(0);
+                        if (section.table && section.table.length > 0) {
+                            doc.autoTable({
+                                startY: yOffset,
+                                head: [['Formato', 'Detalle']],
+                                body: section.table.map(row => [row.Formato, row.Detalle]),
+                                theme: 'grid',
+                                headStyles: { fillColor: [0, 48, 135], textColor: [255, 255, 255] },
+                                margin: { left: margin, right: margin },
+                                styles: { fontSize: 8, cellPadding: 2 }
+                            });
+                            yOffset = doc.lastAutoTable.finalY + 5;
+                        } else {
+                            const lines = doc.splitTextToSize(section.content, pageWidth - 2 * margin);
+                            doc.text(lines, margin, yOffset);
+                            yOffset += lines.length * 5 + 5;
+                        }
+                    });
+
+                    // Firma
+                    if (yOffset > pageHeight - margin - 20) {
+                        doc.addPage();
+                        yOffset = margin;
+                    }
+                    doc.setFontSize(10);
+                    doc.setTextColor(0);
+                    doc.text('Analizado por: Sistema ITL PEMEX', margin, yOffset);
+                    doc.text('Experto en Seguridad Ocupacional y Relaciones Laborales', margin, yOffset + 5);
+                    yOffset += 15;
+
+                    yOffset += 10;
+                });
+
+                // Pie de página
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setTextColor(100);
+                    doc.text(`Página ${i} de ${pageCount}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+                    doc.text('Generado por Sistema ITL PEMEX - DTO-PACH-RL-03', pageWidth / 2, pageHeight - 5, { align: 'center' });
+                }
+
+                doc.save(`Dictamen_ITL_${currentAccidentId}_20250530.pdf`);
+                showStatus('✅ PDF generado y descargado', 'success');
+
+            } catch (error) {
+                console.error('Error generando PDF:', error);
+                showStatus(`❌ Error generando PDF: ${error.message}`, 'error');
+            }
+        }
+
+        // Función para llamar a Azure OpenAI GPT-4o
+        async function callAzureOpenAI(imageBase64, pageNum, mode, textPrompt) {
+            const url = `${AZURE_CONFIG.endpoint}/openai/deployments/${AZURE_CONFIG.deployment}/chat/completions?api-version=${AZURE_CONFIG.apiVersion}`;
+            let body;
+
+            if (mode === 'extract') {
+                const prompt = `
+Eres un experto extrayendo datos de formularios ITL de PEMEX. Analiza esta imagen y extrae TODA la información visible, incluyendo texto manuscrito.
+EXTRAE ESTOS CAMPOS: Ficha, Nombre, Fecha_Incidente, Centro_Trabajo, Departamento, Categoria, Clave_Centro, Relato_Hechos, Relato_Medico, Medico, Fecha_Atencion, Diagnostico, Unidad_Medica, Condiciones_Inseguras, Actos_Inseguros, Calificacion_Accidente, Fundamento_Legal, Formatos_Considerados, Observaciones, Fecha_Calificacion, Responsable_Calificacion, Costo_Total, Tipo_Incapacidad, Dias_Incapacidad, Fecha_Alta, Responsable_Costos, Lugar_Accidente, Domicilio_Trabajador, Documentos_Probatorios, Es_Traslado.
+RESPONDE en JSON plano. Omite campos vacíos o no visibles.
+`;
+                body = {
+                    messages: [
+                        {
+                            role: 'user',
+                            content: [
+                                { type: 'text', text: prompt },
+                                { type: 'image_url', image_url: { url: `data:image/png;base64,${imageBase64}` } }
+                            ]
+                        }
+                    ],
+                    max_tokens: 3000,
+                    temperature: 0.1
+                };
+            } else {
+                body = {
+                    messages: [
+                        { role: 'user', content: textPrompt }
+                    ],
+                    max_tokens: 4000,
+                    temperature: 0.2
+                };
+            }
+
+            for (let attempt = 1; attempt <= 2; attempt++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'api-key': AZURE_CONFIG.apiKey
+                        },
+                        body: JSON.stringify(body)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Azure OpenAI Error: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const content = result.choices[0].message.content;
+                    const jsonMatch = content.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        return JSON.parse(jsonMatch[0]);
+                    }
+                    return JSON.parse(content);
+                } catch (error) {
+                    console.error(`Intento ${attempt} fallido (modo ${mode}):`, error);
+                    if (attempt === 2) {
+                        return {};
+                    }
+                }
+            }
+            return {};
+        }
+
+        // Función para aplanar respuesta de Azure
+        function flattenAzureResponse(azureData, pageNum) {
+            const flatData = {};
+            const directMappings = {
+                'ficha_del_trabajador': 'Ficha',
+                'nombre_completo_del_trabajador': 'Nombre',
+                'fecha_y_hora_del_accidente_lesion': 'Fecha_Incidente',
+                'centro_de_trabajo': 'Centro_Trabajo',
+                'departamento': 'Departamento',
+                'categoria_puesto': 'Categoria',
+                'clave_del_centro': 'Clave_Centro',
+                'relato_completo_de_como_ocurrio_la_lesion': 'Relato_Hechos',
+                'descripcion_medica_detallada_del_mecanismo_de_lesion': 'Relato_Medico',
+                'nombre_del_medico_tratante': 'Medico',
+                'fecha_y_hora_de_atencion_medica': 'Fecha_Atencion',
+                'diagnostico_medico_con_codigos_cie_10': 'Diagnostico',
+                'unidad_medica_que_emite_el_documento': 'Unidad_Medica',
+                'condiciones_inseguras_identificadas': 'Condiciones_Inseguras',
+                'actos_inseguros': 'Actos_Inseguros',
+                'calificacion_accidente': 'Calificacion_Accidente',
+                'fundamento_legal': 'Fundamento_Legal',
+                'formatos_considerados': 'Formatos_Considerados',
+                'observaciones': 'Observaciones',
+                'fecha_calificacion': 'Fecha_Calificacion',
+                'responsable_calificacion': 'Responsable_Calificacion',
+                'costo_total': 'Costo_Total',
+                'tipo_incapacidad': 'Tipo_Incapacidad',
+                'dias_incapacidad': 'Dias_Incapacidad',
+                'fecha_alta': 'Fecha_Alta',
+                'responsable_costos': 'Responsable_Costos',
+                'lugar_accidente': 'Lugar_Accidente',
+                'domicilio_trabajador': 'Domicilio_Trabajador',
+                'documentos_probatorios': 'Documentos_Probatorios',
+                'es_traslado': 'Es_Traslado'
+            };
+
+            function flattenObject(obj, prefix = '') {
+                for (const [key, value] of Object.entries(obj)) {
+                    if (value && typeof value === 'object' && !Array.isArray(value)) {
+                        flattenObject(value, prefix);
+                    } else if (value && String(value).trim().length > 0) {
+                        const mappedKey = directMappings[key.toLowerCase()] || key;
+                        flatData[mappedKey] = String(value).trim();
+                    }
+                }
+            }
+
+            flattenObject(azureData);
+            return flatData;
+        }
+
+        // Función para extraer datos con patrones avanzados
+        function extractDataWithAdvancedPatterns(text, filename) {
+            const casesMap = new Map();
+            let currentCase = null;
+            let currentCaseName = null;
+            let currentFicha = null;
+            let hasMeaningfulData = false;
+
+            const patterns = {
+                Ficha: [/Ficha:\s*(\d{6})/i, /Ficha\s+(\d{6})/i],
+                Nombre: [
+                    /Nombre del trabajador.*?:\s*([A-ZÁÉÍÓÚÑ][a-záéíóúñ\s]{8,50})/i,
+                    /Enriqueta del R[ií]o Pacheco/i,
+                    /Roberto Daniel Manzo Granados/i,
+                    /Ofelia Garc[íi]a Canseco/i,
+                    /Jos[ée] Antonio Guti[ée]rrez Cordero/i
+                ],
+                Fecha_Incidente: [
+                    /Fecha y hora en que se lesion[óo].*?(\d{1,2}\s*\/\s*\d{1,2}\s*\/\s*\d{4}.*?a las\s*\d{1,2}:\d{2})/i,
+                    /(\d{1,2}\s*\/\s*\d{1,2}\s*\/\s*\d{4}\s*a las\s*\d{1,2}:\d{2})/i
+                ],
+                Centro_Trabajo: [/Centro de Trabajo:\s*([^\n\r]{10,80})/i, /Oficinas Centrales|Centro Administrativo|Torre Ejecutiva|Subgerencia de Multimodal/i],
+                Departamento: [/Departamento de adscripci[óo]n:\s*([^\n\r]{10,100})/i, /Gerencia|Subgerencia|Coordinaci[óo]n/i, /SUBGERENCIA[^\n\r]{10,100}/i],
+                Categoria: [/Categor[íi]a:\s*([A-Za-z\s]{4,20})/i, /Subgerente|Coordinador|Auxiliar/i],
+                Clave_Centro: [/Clave:\s*(\d{4})/i],
+                Relato_Hechos: [/Relato de la forma en que ocurri[óo] la lesi[óo]n:([\s\S]*?)(?:Se anexa|Nombre|Original|$)/i, /El \d{1,2} de [^\n\r]*?([\s\S]*?)(?:De las condiciones|$)/i],
+                Relato_Medico: [/Descripci[óo]n detallada del mecanismo de la lesi[óo]n([\s\S]*?)(?:Parte.*del cuerpo|Las lesiones|$)/i, /PACIENTE [^\n\r]*?([\s\S]*?)(?:Parte|$)/i, /Posteriormente[^\n\r]*?([\s\S]*?)(?:Mi jefe|$)/i],
+                Medico: [/Nombre del m[ée]dico[:\s]*([A-ZÁÉÍÓÚÑ][A-Za-z\s\.]{10,50})/i],
+                Fecha_Atencion: [/hora en que se otorg[óo] la atenci[óo]n m[ée]dica:\s*([\d:]{4,8})/i, /Fecha:\s*(\d{1,2}\/\d{1,2}\/\d{4})/i],
+                Diagnostico: [/(W\d{2}\.\d+:?[^\n\r]{5,100})/i, /esguince|contusi[óo]n/i],
+                Unidad_Medica: [/Unidad M[ée]dica que emite el documento:\s*([^\n\r]{10,80})/i],
+                Condiciones_Inseguras: [/Condici[óo]n insegura:\s*([A-Za-z\s]{3,50})/i, /hueco|piso h[úu]medo|objeto|irregularidadi/i],
+                Actos_Inseguros: [/Acto inseguro:\s*([A-Za-z\s]{3,50})/i, /Ninguno|falta de atenci[óo]n/i],
+                Calificacion_Accidente: [/(SÍ\s*DE\s*TRABAJO|NO\s*DE\s*TRABAJO)/i],
+                Fundamento_Legal: [/Con base en:\s*([^\n\r]{10,100})/i, /(Cl[áa]u?\.\s*\d+[^\n\r]{0,50})/i],
+                Formatos_Considerados: [/Para la calificaci[óo]n se consider[óo]:\s*([^\n\r]{10,100})/i],
+                Observaciones: [/OBSERVACIONES:\s*([^\n\r]{10,200})/i],
+                Fecha_Calificacion: [/(\d{1,2}\s*de\s*\w+\s*de\s*\d{4})/i, /Fecha[:\s]*(\d{1,2}\/\d{1,2}\/\d{4})/i],
+                Responsable_Calificacion: [/Lic\.\s*([A-ZÁÉÍÓÚÑ][A-Za-z\s\.]{10,50})/i],
+                Costo_Total: [/costo\s*total[^\$]*\$\s*([\d,\.]+)/i],
+                Tipo_Incapacidad: [/(Temporal|Permanente\s*parcial|Permanente\s*total|Muerte)/i],
+                Dias_Incapacidad: [/D[íi]as\s*de\s*incapacidad[^\d]*(\d{1,3})/i],
+                Fecha_Alta: [/Al:\s*(\d{1,2}\/\d{1,2}\/\d{4})/i],
+                Responsable_Costos: [/Por\s*el\s*Servicio\s*M[ée]dico:\s*([A-ZÁÉÍÓÚÑ][^\n\r]{10,50})/i],
+                Lugar_Accidente: [/lugar\s*donde\s*se\s*lesion[óo]:\s*([^\n\r]{10,100})/i, /PASILLO[^\n\r]{10,100}/i],
+                Domicilio_Trabajador: [/Domicilio\s*del\s*trabajador:\s*([^\n\r]{10,150})/i],
+                Documentos_Probatorios: [/Documentos\s*con\s*los\s*que\s*se\s*comprueba\s*la\s*lesi[óo]n:\s*([^\n\r]{10,200})/i],
+                Es_Traslado: [/(traslado|trayecto|ITL-T)/i]
+            };
+
+            const lines = text.split('\n');
+            for (const line of lines) {
+                const nameMatch = patterns.Nombre.find(pattern => pattern.test(line));
+                if (nameMatch) {
+                    const name = line.match(nameMatch)[0].trim();
+                    const normalizedName = normalizeName(name);
+                    const fichaMatch = line.match(/Ficha:\s*(\d{6})/i) || line.match(/Ficha\s+(\d{6})/i);
+                    const ficha = fichaMatch ? fichaMatch[1] : `Ficha_${Date.now()}`;
+
+                    const caseKey = `${normalizedName}_${ficha}`;
+                    if (!casesMap.has(caseKey)) {
+                        if (currentCaseName && Object.keys(currentCase).length > 1) {
+                            casesMap.set(`${normalizeName(currentCaseName)}_${currentFicha || 'NoFicha'}`, { case: currentCaseName, data: currentCase });
+                        }
+                        currentCaseName = name;
+                        currentFicha = ficha;
+                        currentCase = { Nombre: name, Ficha: ficha };
+                        hasMeaningfulData = true;
+                    }
+                }
+
+                for (const [key, patternArray] of Object.entries(patterns)) {
+                    for (const pattern of patternArray) {
+                        const match = line.match(pattern);
+                        if (match) {
+                            const value = match[1] ? match[1].trim() : match[0].trim();
+                            if (value && value.length > 1 && currentCase) {
+                                currentCase[key] = currentCase[key] ? `${currentCase[key]}\n${value}` : value;
+                                hasMeaningfulData = true;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (currentCaseName && Object.keys(currentCase).length > 1) {
+                casesMap.set(`${normalizeName(currentCaseName)}_${currentFicha || 'NoFicha'}`, { case: currentCaseName, data: currentCase });
+            }
+
+            let cases = Array.from(casesMap.values());
+            if (cases.length === 0 || !hasMeaningfulData) {
+                const name = extractNameFromFilename(filename) || 'Caso Desconocido';
+                cases = [{
+                    case: name,
+                    data: { Nombre: name, Ficha: 'Desconocida' }
+                }];
+            }
+
+            return cases;
+        }
+
+        // Función de fallback con patrones simples
+        function extractWithSimplePatterns(text, filename) {
+            const casesMap = new Map();
+            let hasMeaningfulData = false;
+            const patterns = [
+                { key: 'Ficha', pattern: /\d{6}/ },
+                { key: 'Nombre', pattern: /Enriqueta del R[ií]o Pacheco|Roberto Daniel Manzo Granados|Ofelia Garc[íi]a Canseco|Jos[ée] Antonio Guti[ée]rrez Cordero/i },
+                { key: 'Fecha_Incidente', pattern: /\d{1,2}\s*\/\s*\d{1,2}\s*\/\s*\d{4}/i },
+                { key: 'Centro_Trabajo', pattern: /Oficinas Centrales|Centro Administrativo|Torre Ejecutiva|Subgerencia de Multimodal/i },
+                { key: 'Departamento', pattern: /Gerencia|Subgerencia|Coordinaci[óo]n[^\n\r]{10,100}/i },
+                { key: 'Categoria', pattern: /Subgerente|Coordinador|Auxiliar/i },
+                { key: 'Diagnostico', pattern: /W\d{2}\.\d+:[^\n\r]{5,100}|esguince|contusi[óo]n/i }
+            ];
+
+            const lines = text.split('\n');
+            let currentCase = null;
+            let currentCaseName = null;
+            let currentFicha = null;
+
+            for (const line of lines) {
+                const nameMatch = patterns.find(p => p.key === 'Nombre')?.pattern.exec(line);
+                if (nameMatch) {
+                    const name = nameMatch[0].trim();
+                    const normalizedName = normalizeName(name);
+                    const fichaMatch = line.match(/\d{6}/);
+                    const ficha = fichaMatch ? fichaMatch[0] : `Ficha_${Date.now()}`;
+
+                    const caseKey = `${normalizedName}_${ficha}`;
+                    if (!casesMap.has(caseKey)) {
+                        if (currentCaseName && Object.keys(currentCase).length > 1) {
+                            casesMap.set(`${normalizeName(currentCaseName)}_${currentFicha || 'NoFicha'}`, { case: currentCaseName, data: currentCase });
+                        }
+                        currentCaseName = name;
+                        currentFicha = ficha;
+                        currentCase = { Nombre: name, Ficha: ficha };
+                        hasMeaningfulData = true;
+                    }
+                }
+
+                patterns.forEach(({key, pattern}) => {
+                    const match = line.match(pattern);
+                    if (match) {
+                        const value = match[0].trim();
+                        if (value && currentCase) {
+                            currentCase[key] = currentCase[key] ? `${currentCase[key]}\n${value}` : value;
+                            hasMeaningfulData = true;
+                        }
+                    }
+                });
+            }
+
+            if (currentCaseName && Object.keys(currentCase).length > 1) {
+                casesMap.set(`${normalizeName(currentCaseName)}_${currentFicha || 'NoFicha'}`, { case: currentCaseName, data: currentCase });
+            }
+
+            let cases = Array.from(casesMap.values());
+            if (cases.length === 0 || !hasMeaningfulData) {
+                const name = extractNameFromFilename(filename) || 'Caso Desconocido';
+                cases = [{
+                    case: name,
+                    data: { Nombre: name, Ficha: 'Desconocida' }
+                }];
+            }
+
+            return cases;
+        }
+
+        // Función para mostrar resultados
+        function displayResults() {
+            const extractedDataDiv = document.getElementById('extractedData');
+            const processStatus = document.getElementById('processStatus');
+            const resultSection = document.getElementById('resultSection');
+
+            extractedDataDiv.innerHTML = '';
+            analysisResults.forEach((result, index) => {
+                const analysis = result.analysis;
+                const card = document.createElement('div');
+                card.className = 'field-display p-4 rounded-lg';
+                card.innerHTML = `
+                    <div class="text-blue-200 text-sm font-medium">Caso ${result.case}</div>
+                    <div class="text-white text-base mt-1">Dictamen: ${analysis.Dictamen || 'No disponible'}</div>
+                    <div class="text-white text-sm mt-1">${analysis.Resumen || 'Sin resumen'}</div>
+                    <button class="accordion-toggle text-blue-400 text-sm mt-2">Mostrar detalles</button>
+                    <div class="accordion-content">
+                        <div class="text-white text-sm mt-2">${Object.entries(analysis.Analisis || {})
+                            .filter(([_, value]) => value && value !== 'No disponible')
+                            .map(([key, value]) => `<strong>${key}</strong>: ${value}`)
+                            .join('<br>') || 'No disponible'}</div>
+                        <div class="text-white text-sm mt-2"><strong>Justificación</strong>: ${analysis.Justificacion || 'No disponible'}</div>
+                        <div class="text-white text-sm mt-2"><strong>Incumplimientos</strong>: ${analysis.Incumplimientos || 'Ninguno'}</div>
+                        <div class="text-white text-sm mt-2"><strong>Recomendaciones</strong>: ${analysis.Recomendaciones || 'Ninguna'}</div>
+                    </div>
+                `;
+                extractedDataDiv.appendChild(card);
+
+                card.querySelector('.accordion-toggle').addEventListener('click', () => {
+                    const content = card.querySelector('.accordion-content');
+                    content.classList.toggle('open');
+                    card.querySelector('.accordion-toggle').textContent = content.classList.contains('open') ? 'Ocultar detalles' : 'Mostrar detalles';
+                });
+            });
+
+            processStatus.innerHTML = analysisResults.map(result => {
+                const data = extractedData.find(c => c.case === result.case)?.data || {};
+                const hasITL1 = data.Relato_Hechos && data.Relato_Hechos.length > 20;
+                const hasITL2 = data.Relato_Medico || data.Medico;
+                const hasITL3 = data.Condiciones_Inseguras || data.Actos_Inseguros;
+                const hasITL4 = data.Calificacion_Accidente;
+                const hasITL5 = data.Costo_Total || data.Tipo_Incapacidad;
+                const hasITLT = data.Lugar_Accidente && data.Es_Traslado;
+                return `
+                    <div class="flex justify-between items-center bg-white bg-opacity-10 p-3 rounded-lg">
+                        <span class="text-white font-medium">Caso ${result.case}</span>
+                        <span class="text-white text-sm">
+                            ITL-1: ${hasITL1 ? '✅' : '❌'} |
+                            ITL-2: ${hasITL2 ? '✅' : '❌'} |
+                            ITL-3: ${hasITL3 ? '✅' : '❌'} |
+                            ITL-4: ${hasITL4 ? '✅' : '❌'} |
+                            ITL-5: ${hasITL5 ? '✅' : '❌'} |
+                            ITL-T: ${hasITLT ? '✅' : '❌'}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+
+            if (analysisResults.length > 0) {
+                resultSection.classList.remove('hidden');
+            } else {
+                showStatus('⚠️ No se encontraron casos válidos para mostrar', 'error');
+            }
+        }
+
+        // Función para mostrar estado
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            let className = 'mt-6 p-4 rounded-lg ';
+            if (type === 'success') {
+                className += 'bg-green-500 bg-opacity-20 text-green-300 border border-green-500 success-message';
+            } else if (type === 'error') {
+                className += 'bg-red-500 bg-opacity-20 text-red-300 border border-red-500';
+            } else if (type === 'warning') {
+                className += 'bg-yellow-500 bg-opacity-20 text-yellow-300 border border-yellow-500';
+            } else {
+                className += 'bg-blue-500 bg-opacity-20 text-blue-300 border border-blue-500';
+            }
+            status.className = className;
+            status.classList.remove('hidden');
+        }
+
+        // Función para mostrar ayuda
+        function showHelp() {
+            const helpContent = `
+                <div class="bg-blue-900 bg-opacity-30 p-6 rounded-xl">
+                    <h3 class="text-xl font-bold text-white mb-4">📚 Ayuda del Sistema ITL</h3>
+                    <div class="space-y-4 text-white">
+                        <div>
+                            <h4 class="font-semibold text-blue-200">🔍 Análisis de ITL:</h4>
+                            <p class="text-sm">Analiza formularios ITL y genera dictámenes conforme a DTO-PACH-RL-03.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-blue-200">📄 PDF Profesional:</h4>
+                            <p class="text-sm">Genera un PDF con análisis detallado de todos los casos.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-blue-200">🗑️ Limpiar:</h4>
+                            <p class="text-sm">Limpia el formulario para subir un nuevo PDF.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-blue-200">🔒 Seguridad:</h4>
+                            <p class="text-sm">Procesamiento local, sin servidores externos.</p>
+                        </div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.style.display='none'" 
+                            class="mt-4 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white">
+                        Cerrar Ayuda
+                    </button>
+                </div>
+            `;
+            const helpDiv = document.createElement('div');
+            helpDiv.innerHTML = helpContent;
+            helpDiv.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            helpDiv.onclick = function(e) {
+                if (e.target === helpDiv) {
+                    document.body.removeChild(helpDiv);
+                }
+            };
+            document.body.appendChild(helpDiv);
+        }
+
+        // Agregar botón de ayuda
+        document.addEventListener('DOMContentLoaded', function() {
+            const helpButton = document.createElement('button');
+            helpButton.className = 'fixed bottom-4 right-4 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg z-40';
+            helpButton.innerHTML = '❓';
+            helpButton.onclick = showHelp;
+            helpButton.title = 'Ayuda del Sistema';
+            document.body.appendChild(helpButton);
+        });
+    </script>
+</body>
+</html>
