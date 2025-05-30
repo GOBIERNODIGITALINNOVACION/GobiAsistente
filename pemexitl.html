@@ -88,12 +88,25 @@
                                       hover:file:bg-blue-700 transition-all duration-200">
                     </div>
                     
-                    <div class="grid grid-cols-1 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <button id="extractButton" 
                                 class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 
                                        text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 
                                        transform hover:scale-105 shadow-lg">
-                            🔍 Procesar Formulario ITL
+                            🔍 Extraer Datos del PDF
+                        </button>
+                        
+                        <button id="downloadExcelButton" 
+                                class="w-full excel-button text-white px-8 py-4 rounded-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled>
+                            📊 Descargar Excel
+                        </button>
+
+                        <button id="debugButton" 
+                                class="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 
+                                       text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 
+                                       transform hover:scale-105 shadow-lg">
+                            🐛 Debug Texto
                         </button>
                     </div>
                     
@@ -159,6 +172,8 @@
 
         // Event Listeners
         document.getElementById('extractButton').addEventListener('click', extractDataFromPDF);
+        document.getElementById('downloadExcelButton').addEventListener('click', downloadExcel);
+        document.getElementById('debugButton').addEventListener('click', debugPDFText);
 
         // Función principal para extraer datos del PDF
         async function extractDataFromPDF() {
@@ -267,17 +282,21 @@
 
                 // Mostrar resultados
                 displayResults(extractedData);
-                showStatus('✅ Formulario ITL procesado y enviado a Google Sheets exitosamente', 'success');
+                showStatus('✅ Datos extraídos exitosamente del formulario ITL', 'success');
                 
                 // Enviar automáticamente a Google Sheets
                 loadingText.textContent = 'Enviando datos a Google Sheets...';
+                loadingSection.classList.remove('hidden');
                 
                 const sheetsResult = await sendToGoogleSheets(extractedData);
                 if (sheetsResult) {
-                    showStatus('✅ Formulario procesado y enviado a Google Sheets exitosamente', 'success');
+                    showStatus('✅ Datos extraídos y enviados a Google Sheets exitosamente', 'success');
                 } else {
-                    showStatus('✅ Formulario procesado exitosamente (Google Sheets no disponible)', 'success');
+                    showStatus('✅ Datos extraídos exitosamente (Google Sheets no disponible)', 'success');
                 }
+                
+                // Habilitar botón de Excel
+                document.getElementById('downloadExcelButton').disabled = false;
 
             } catch (error) {
                 console.error('Error completo:', error);
@@ -1457,6 +1476,140 @@ RESPONDE SOLO con un JSON PLANO (sin objetos anidados) usando exactamente los no
             resultSection.classList.remove('hidden');
         }
 
+        function downloadExcel() {
+            if (!extractedData) {
+                showStatus('No hay datos para exportar', 'error');
+                return;
+            }
+
+            try {
+                // Crear libro de Excel
+                const workbook = XLSX.utils.book_new();
+                
+                // Función helper para obtener valor seguro
+                const getValueSafe = (key, defaultValue = 'Sin datos') => {
+                    const value = extractedData[key];
+                    return (value && String(value).trim() !== '') ? String(value).trim() : defaultValue;
+                };
+
+                // Hoja 1: Accidentes_Trabajo
+                const accidentesData = [[
+                    'ID_Accidente', 'Ficha_Trabajador', 'Nombre_Trabajador', 'Fecha_Incidente', 
+                    'Tipo_Accidente', 'Centro_Trabajo', 'Departamento', 'Categoria', 
+                    'Estatus_Accidente', 'Fecha_Registro'
+                ], [
+                    getValueSafe('ID_Accidente'),
+                    getValueSafe('Ficha'),
+                    getValueSafe('Nombre'),
+                    getValueSafe('Fecha_Incidente', new Date().toLocaleDateString()),
+                    getValueSafe('Tipo_Accidente', 'De Trabajo'),
+                    getValueSafe('Centro_Trabajo'),
+                    getValueSafe('Departamento'),
+                    getValueSafe('Categoria'),
+                    'En Proceso',
+                    new Date().toLocaleDateString()
+                ]];
+
+                // Hoja 2: ITL_1_Informe_Trabajador
+                const itl1Data = [[
+                    'ID_ITL1', 'ID_Accidente', 'Relato_Hechos', 'Fecha_Entrega', 'Estado'
+                ], [
+                    getValueSafe('ID_Accidente'),
+                    getValueSafe('ID_Accidente'),
+                    getValueSafe('Relato_Hechos', 'Pendiente de captura'),
+                    extractedData.Relato_Hechos && extractedData.Relato_Hechos !== 'Se anexa relato' ? new Date().toLocaleDateString() : '',
+                    extractedData.Relato_Hechos && extractedData.Relato_Hechos !== 'Se anexa relato' ? 'Completado' : 'Pendiente'
+                ]];
+
+                // Hoja 3: ITL_2_Condicion_Trabajador
+                const itl2Data = [[
+                    'ID_ITL2', 'ID_Accidente', 'Relato_Medico', 'Medico', 'Diagnostico', 
+                    'Unidad_Medica', 'Fecha_Atencion', 'Estado'
+                ], [
+                    getValueSafe('ID_Accidente'),
+                    getValueSafe('ID_Accidente'),
+                    getValueSafe('Relato_Medico', 'Pendiente evaluación médica'),
+                    getValueSafe('Medico', 'Por asignar'),
+                    getValueSafe('Diagnostico', 'Pendiente'),
+                    getValueSafe('Unidad_Medica', 'Por determinar'),
+                    getValueSafe('Fecha_Atencion', ''),
+                    (extractedData.Relato_Medico || extractedData.Medico) ? 'Completado' : 'Pendiente'
+                ]];
+
+                // Hoja 4: ITL_3_Reporte_Seguridad
+                const itl3Data = [[
+                    'ID_ITL3', 'ID_Accidente', 'Condiciones_Inseguras', 'Actos_Inseguros', 
+                    'Fecha_Entrega', 'Estado'
+                ], [
+                    getValueSafe('ID_Accidente'),
+                    getValueSafe('ID_Accidente'),
+                    getValueSafe('Condiciones_Inseguras', 'Por evaluar'),
+                    getValueSafe('Actos_Inseguros', 'Por evaluar'),
+                    (extractedData.Condiciones_Inseguras || extractedData.Actos_Inseguros) ? new Date().toLocaleDateString() : '',
+                    (extractedData.Condiciones_Inseguras || extractedData.Actos_Inseguros) ? 'Completado' : 'Pendiente'
+                ]];
+
+                // Hoja 5: Resumen con IA
+                const completionScore = [
+                    extractedData.Relato_Hechos && extractedData.Relato_Hechos !== 'Se anexa relato' ? 1 : 0,
+                    (extractedData.Relato_Medico || extractedData.Medico) ? 1 : 0,
+                    (extractedData.Condiciones_Inseguras || extractedData.Actos_Inseguros) ? 1 : 0,
+                    (extractedData.Calificacion_Accidente && extractedData.Calificacion_Accidente !== 'Pendiente calificación') ? 1 : 0,
+                    (extractedData.Costo_Total || extractedData.Tipo_Incapacidad) ? 1 : 0,
+                    (extractedData.Lugar_Accidente && extractedData.Relato_Hechos) ? 1 : 0
+                ].reduce((a, b) => a + b, 0);
+
+                // Generar interpretación IA
+                const calificacionIA = generateCalificacionIA(extractedData);
+
+                const resumenData = [[
+                    'ID_Accidente', 'Ficha_Trabajador', 'Nombre', 'Fecha_Incidente', 
+                    'Tipo_Accidente', 'ITL_1', 'ITL_2', 'ITL_3', 'ITL_4', 'ITL_5', 'ITL_T', 
+                    'Estado_General', 'Puntuacion_Completitud', 'Estatus_Calificacion_IA', 'Fecha_Procesamiento'
+                ], [
+                    getValueSafe('ID_Accidente'),
+                    getValueSafe('Ficha'),
+                    getValueSafe('Nombre'),
+                    getValueSafe('Fecha_Incidente', new Date().toLocaleDateString()),
+                    getValueSafe('Tipo_Accidente', 'De Trabajo'),
+                    extractedData.Relato_Hechos && extractedData.Relato_Hechos !== 'Se anexa relato' ? 'Completado' : 'Pendiente',
+                    (extractedData.Relato_Medico || extractedData.Medico) ? 'Completado' : 'Pendiente',
+                    (extractedData.Condiciones_Inseguras || extractedData.Actos_Inseguros) ? 'Completado' : 'Pendiente',
+                    (extractedData.Calificacion_Accidente && extractedData.Calificacion_Accidente !== 'Pendiente calificación') ? 'Completado' : 'Pendiente',
+                    (extractedData.Costo_Total || extractedData.Tipo_Incapacidad) ? 'Completado' : 'Pendiente',
+                    (extractedData.Lugar_Accidente && extractedData.Relato_Hechos) ? 'Completado' : 'Pendiente',
+                    completionScore === 6 ? 'Completo' : `Parcial (${completionScore}/6)`,
+                    `${completionScore}/6`,
+                    calificacionIA,
+                    new Date().toLocaleString()
+                ]];
+
+                // Crear hojas
+                const wsAccidentes = XLSX.utils.aoa_to_sheet(accidentesData);
+                const wsITL1 = XLSX.utils.aoa_to_sheet(itl1Data);
+                const wsITL2 = XLSX.utils.aoa_to_sheet(itl2Data);
+                const wsITL3 = XLSX.utils.aoa_to_sheet(itl3Data);
+                const wsResumen = XLSX.utils.aoa_to_sheet(resumenData);
+
+                // Agregar hojas al libro
+                XLSX.utils.book_append_sheet(workbook, wsAccidentes, "Accidentes_Trabajo");
+                XLSX.utils.book_append_sheet(workbook, wsITL1, "ITL_1_Informe_Trabajador");
+                XLSX.utils.book_append_sheet(workbook, wsITL2, "ITL_2_Condicion_Trabajador");
+                XLSX.utils.book_append_sheet(workbook, wsITL3, "ITL_3_Reporte_Seguridad");
+                XLSX.utils.book_append_sheet(workbook, wsResumen, "Resumen");
+
+                // Generar y descargar archivo
+                const filename = `ITL_PEMEX_${extractedData.ID_Accidente}_${new Date().toISOString().split('T')[0]}.xlsx`;
+                XLSX.writeFile(workbook, filename);
+
+                showStatus(`✅ Excel generado y descargado: ${filename}`, 'success');
+
+            } catch (error) {
+                console.error('Error generando Excel:', error);
+                showStatus(`❌ Error generando Excel: ${error.message}`, 'error');
+            }
+        }
+
         function showStatus(message, type) {
             const status = document.getElementById('status');
             status.textContent = message;
@@ -1474,6 +1627,108 @@ RESPONDE SOLO con un JSON PLANO (sin objetos anidados) usando exactamente los no
             status.classList.remove('hidden');
         }
 
+        // Función de debug para ver el texto extraído
+        async function debugPDFText() {
+            const fileInput = document.getElementById('pdfFile');
+            
+            if (!fileInput.files.length) {
+                showStatus('Por favor selecciona un archivo PDF para debug', 'error');
+                return;
+            }
+
+            try {
+                const file = fileInput.files[0];
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                
+                let debugInfo = '=== DEBUG INFORMACIÓN DEL PDF ===\n';
+                debugInfo += `Archivo: ${file.name}\n`;
+                debugInfo += `Tamaño: ${(file.size / 1024).toFixed(2)} KB\n`;
+                debugInfo += `Páginas: ${pdf.numPages}\n\n`;
+                
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    const page = await pdf.getPage(pageNum);
+                    const textContent = await page.getTextContent();
+                    
+                    debugInfo += `=== PÁGINA ${pageNum} ===\n`;
+                    debugInfo += `Items de texto: ${textContent.items.length}\n`;
+                    
+                    if (textContent.items.length > 0) {
+                        debugInfo += 'Texto extraído:\n';
+                        textContent.items.forEach((item, index) => {
+                            debugInfo += `[${index}] "${item.str}" (x:${item.transform[4].toFixed(1)}, y:${item.transform[5].toFixed(1)})\n`;
+                        });
+                    } else {
+                        debugInfo += 'No se encontró texto en esta página\n';
+                    }
+                    debugInfo += '\n';
+                }
+                
+                console.log(debugInfo);
+                
+                // Mostrar en un modal
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+                modal.innerHTML = `
+                    <div class="bg-white rounded-xl p-6 max-w-4xl max-h-96 overflow-auto">
+                        <h3 class="text-xl font-bold mb-4">🐛 Debug - Texto Extraído del PDF</h3>
+                        <pre class="text-sm bg-gray-100 p-4 rounded overflow-auto max-h-64">${debugInfo}</pre>
+                        <button onclick="this.parentElement.parentElement.remove()" 
+                                class="mt-4 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white">
+                            Cerrar
+                        </button>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                showStatus('🐛 Debug completado - Ver consola y modal', 'info');
+                
+            } catch (error) {
+                console.error('Error en debug:', error);
+                showStatus(`❌ Error en debug: ${error.message}`, 'error');
+            }
+        }
+
+        // Función para exportar datos como JSON
+        function exportAsJSON() {
+            if (!extractedData) {
+                showStatus('No hay datos para exportar', 'error');
+                return;
+            }
+
+            const dataToExport = {
+                metadata: {
+                    exported_at: new Date().toISOString(),
+                    system_version: '3.0',
+                    accident_id: extractedData.ID_Accidente
+                },
+                extracted_data: extractedData,
+                processing_info: {
+                    completion_score: [
+                        extractedData.Relato_Hechos ? 1 : 0,
+                        extractedData.Relato_Medico ? 1 : 0,
+                        extractedData.Condiciones_Inseguras ? 1 : 0
+                    ].reduce((a, b) => a + b, 0),
+                    total_fields: Object.keys(extractedData).length
+                }
+            };
+
+            const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {
+                type: 'application/json'
+            });
+            
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ITL_PEMEX_${extractedData.ID_Accidente}_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showStatus('✅ Datos exportados como JSON', 'success');
+        }
+
         // Función para mostrar ayuda
         function showHelp() {
             const helpContent = `
@@ -1482,23 +1737,23 @@ RESPONDE SOLO con un JSON PLANO (sin objetos anidados) usando exactamente los no
                 
                 <div class="space-y-4 text-white">
                     <div>
-                        <h4 class="font-semibold text-blue-200">🔍 Procesamiento Automático:</h4>
+                        <h4 class="font-semibold text-blue-200">🔍 Extracción de Datos:</h4>
                         <p class="text-sm">El sistema lee automáticamente formularios ITL escaneados, incluyendo texto manuscrito.</p>
                     </div>
                     
                     <div>
-                        <h4 class="font-semibold text-blue-200">📊 Google Sheets:</h4>
-                        <p class="text-sm">Envía automáticamente los datos a Google Sheets con 8 hojas organizadas.</p>
+                        <h4 class="font-semibold text-blue-200">📊 Formato Excel:</h4>
+                        <p class="text-sm">Genera un archivo Excel con 5 hojas: Accidentes, ITL-1, ITL-2, ITL-3 y Resumen.</p>
                     </div>
                     
                     <div>
-                        <h4 class="font-semibold text-blue-200">🤖 Interpretación IA:</h4>
-                        <p class="text-sm">Genera interpretaciones automáticas según normativa DTO-PACH-RL-03.</p>
+                        <h4 class="font-semibold text-blue-200">✅ Validación:</h4>
+                        <p class="text-sm">Verifica automáticamente la completitud de cada formulario ITL.</p>
                     </div>
                     
                     <div>
                         <h4 class="font-semibold text-blue-200">🔒 Seguridad:</h4>
-                        <p class="text-sm">Todos los datos se procesan localmente. Solo se envía a Google Sheets autorizado.</p>
+                        <p class="text-sm">Todos los datos se procesan localmente. No se envía información a servidores externos.</p>
                     </div>
                 </div>
                 
@@ -1520,6 +1775,29 @@ RESPONDE SOLO con un JSON PLANO (sin objetos anidados) usando exactamente los no
             
             document.body.appendChild(helpDiv);
         }
+
+        // Agregar botón de exportar JSON
+        document.addEventListener('DOMContentLoaded', function() {
+            const downloadButton = document.getElementById('downloadExcelButton');
+            const jsonButton = document.createElement('button');
+            jsonButton.id = 'exportJSONButton';
+            jsonButton.className = 'w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 rounded-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed mt-4';
+            jsonButton.textContent = '📄 Exportar como JSON';
+            jsonButton.disabled = true;
+            jsonButton.addEventListener('click', exportAsJSON);
+            
+            downloadButton.parentNode.appendChild(jsonButton);
+        });
+
+        // Actualizar la función displayResults para habilitar el botón JSON
+        const originalDisplayResults = displayResults;
+        displayResults = function(data) {
+            originalDisplayResults(data);
+            const jsonButton = document.getElementById('exportJSONButton');
+            if (jsonButton) {
+                jsonButton.disabled = false;
+            }
+        };
 
         // Agregar botón de ayuda
         document.addEventListener('DOMContentLoaded', function() {
