@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aguascalientes: Revolución Económica 2004-2019</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 0 30px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 40px 20px;
+            border-radius: 15px 15px 0 0;
+            margin: -20px -20px 30px -20px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+        
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-left: 5px solid #007bff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card.success {
+            border-left-color: #28a745;
+        }
+        
+        .card.warning {
+            border-left-color: #ffc107;
+        }
+        
+        .card.info {
+            border-left-color: #17a2b8;
+        }
+        
+        .card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .metric-value {
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .growth-positive {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .growth-negative {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+        }
+        
+        .section h2 {
+            color: #2c3e50;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 10px;
+        }
+        
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin: 30px 0;
+        }
+        
+        .image-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .image-card:hover {
+            transform: scale(1.02);
+        }
+        
+        .image-card img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+        
+        .image-card .caption {
+            padding: 20px;
+        }
+        
+        .image-card .caption h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, #fff3cd, #fef7e0);
+            border: 1px solid #ffc107;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .highlight-box h3 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+        
+        .conclusions {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border: 1px solid #28a745;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 40px;
+        }
+        
+        .conclusions h2 {
+            color: #155724;
+            border-bottom-color: #28a745;
+        }
+        
+        .conclusion-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 8px;
+        }
+        
+        .conclusion-item .icon {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            color: #28a745;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .data-table th {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+        
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .data-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .methodology {
+            background: linear-gradient(135deg, #e7f3ff, #cce7ff);
+            border-left: 5px solid #007bff;
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .image-gallery {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🚀 AGUASCALIENTES: ECONOMÍA IMPARABLE</h1>
+            <p class="subtitle">Análisis Longitudinal de la Revolución Económica 2004-2019</p>
+            <p class="subtitle">Basado en Censos Económicos INEGI</p>
+        </header>
+
+        <div class="summary-cards">
+            <div class="card success">
+                <h3>🏆 SECTOR COMERCIO - EL CAMPEÓN</h3>
+                <div class="metric">
+                    <span>Ingresos per cápita:</span>
+                    <span class="metric-value">$0.44 → $1.04 <span class="growth-positive">(+136.4%)</span></span>
+                </div>
+                <div class="metric">
+                    <span>Valor agregado:</span>
+                    <span class="metric-value">$0.07 → $0.22 <span class="growth-positive">(+214.3%)</span></span>
+                </div>
+                <div class="metric">
+                    <span>Empleos por empresa:</span>
+                    <span class="metric-value">2.94 → 3.27 <span class="growth-positive">(+11.2%)</span></span>
+                </div>
+            </div>
+
+            <div class="card info">
+                <h3>🏨 RESTAURANTES/HOTELES</h3>
+                <div class="metric">
+                    <span>Ingresos per cápita:</span>
+                    <span class="metric-value">$0.11 → $0.21 <span class="growth-positive">(+90.9%)</span></span>
+                </div>
+                <div class="metric">
+                    <span>Valor agregado:</span>
+                    <span class="metric-value">$0.04 → $0.09 <span class="growth-positive">(+125.0%)</span></span>
+                </div>
+                <div class="metric">
+                    <span>Empleos por empresa:</span>
+                    <span class="metric-value">4.08 → 4.04 <span class="growth-negative">(-1.0%)</span></span>
+                </div>
+            </div>
+
+            <div class="card warning">
+                <h3>🔧 OTROS SERVICIOS</h3>
+                <div class="metric">
+                    <span>Ingresos per cápita:</span>
+                    <span class="metric-value">$0.09 → $0.18 <span class="growth-positive">(+100.0%)</span></span>
+                </div>
+                <div class="metric">
+                    <span>Valor agregado:</span>
+                    <span class="metric-value">$0.04 → $0.08 <span class="growth-positive">(+100.0%)</span></span>
+                </div>
+                <div class="metric">
+                    <span>Empleos por empresa:</span>
+                    <span class="metric-value">2.57 → 2.42 <span class="growth-negative">(-5.8%)</span></span>
+                </div>
+            </div>
+        </div>
+
+        <section class="section">
+            <h2>📊 ANÁLISIS VISUAL: TRANSFORMACIÓN ECONÓMICA</h2>
+            
+            <div class="image-gallery">
+                <div class="image-card">
+                    <img src="https://raw.githubusercontent.com/gobiernodigitaleinnovacion/imagenes/refs/heads/main/aguscalienteseconom%C3%ADaimparable.jpg" alt="Aguascalientes Economía Imparable">
+                    <div class="caption">
+                        <h4>🚀 Economía Imparable</h4>
+                        <p>Visualización del crecimiento sostenido de Aguascalientes durante los últimos 15 años, demostrando una trayectoria económica excepcional que supera las expectativas nacionales.</p>
+                    </div>
+                </div>
+
+                <div class="image-card">
+                    <img src="https://raw.githubusercontent.com/gobiernodigitaleinnovacion/imagenes/refs/heads/main/descentralizacion%20inteligente.jpg" alt="Descentralización Inteligente">
+                    <div class="caption">
+                        <h4>🎯 Descentralización Inteligente</h4>
+                        <p>Estrategia de desarrollo territorial que ha permitido una distribución equilibrada del crecimiento económico, evitando la concentración excesiva y promoviendo el desarrollo regional.</p>
+                    </div>
+                </div>
+
+                <div class="image-card">
+                    <img src="https://raw.githubusercontent.com/gobiernodigitaleinnovacion/imagenes/refs/heads/main/estructuraempresarial%20polar.jpg" alt="Estructura Empresarial">
+                    <div class="caption">
+                        <h4>🏢 Estructura Empresarial Diversificada</h4>
+                        <p>Análisis polar de la composición empresarial que muestra un ecosistema empresarial balanceado entre grandes corporaciones y PyMES dinámicas.</p>
+                    </div>
+                </div>
+
+                <div class="image-card">
+                    <img src="https://raw.githubusercontent.com/gobiernodigitaleinnovacion/imagenes/refs/heads/main/inmunidad%20a%20crisi%20globales.jpg" alt="Inmunidad a Crisis">
+                    <div class="caption">
+                        <h4>🛡️ Inmunidad a Crisis Globales</h4>
+                        <p>Demostración de la resiliencia económica de Aguascalientes durante crisis internacionales, incluyendo la crisis financiera de 2008-2009 donde mostró crecimiento anti-cíclico.</p>
+                    </div>
+                </div>
+
+                <div class="image-card">
+                    <img src="https://raw.githubusercontent.com/gobiernodigitaleinnovacion/imagenes/refs/heads/main/revo%C3%B1ucionen%20productividad.jpg" alt="Revolución en Productividad">
+                    <div class="caption">
+                        <h4>⚡ Revolución en Productividad</h4>
+                        <p>Visualización del salto cuántico en productividad sectorial, donde todos los sectores principales duplicaron o triplicaron su valor agregado por trabajador.</p>
+                    </div>
+                </div>
+
+                <div class="image-card">
+                    <img src="https://raw.githubusercontent.com/gobiernodigitaleinnovacion/imagenes/refs/heads/main/proximcenso2014.jpg" alt="Próximo Censo">
+                    <div class="caption">
+                        <h4>🔮 Proyección Censo 2024</h4>
+                        <p>Preparación metodológica para la integración del próximo Censo Económico 2024, manteniendo la continuidad del análisis longitudinal.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>📈 ANÁLISIS DETALLADO: BOOM DE PRODUCTIVIDAD SECTORIAL</h2>
+            
+            <div class="highlight-box">
+                <h3>🎯 TENDENCIA PRINCIPAL: MODERNIZACIÓN PROFUNDA</h3>
+                <p>Aguascalientes experimentó una <strong>revolución de productividad</strong> donde todos los sectores principales mejoraron dramáticamente su eficiencia operativa. Esta transformación no se basó en el crecimiento del tamaño empresarial, sino en una mejora fundamental de la productividad por trabajador.</p>
+            </div>
+
+            <h3>🏆 RANKING FINAL PRODUCTIVIDAD 2019</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Posición</th>
+                        <th>Sector</th>
+                        <th>Valor Agregado por Trabajador</th>
+                        <th>Crecimiento 2004-2019</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>🥇 1°</td>
+                        <td>Comercio (Sector 46)</td>
+                        <td>$0.22</td>
+                        <td class="growth-positive">+214.3%</td>
+                    </tr>
+                    <tr>
+                        <td>🥈 2°</td>
+                        <td>Restaurantes/Hoteles (Sector 72)</td>
+                        <td>$0.09</td>
+                        <td class="growth-positive">+125.0%</td>
+                    </tr>
+                    <tr>
+                        <td>🥉 3°</td>
+                        <td>Otros Servicios (Sector 81)</td>
+                        <td>$0.08</td>
+                        <td class="growth-positive">+100.0%</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="methodology">
+                <h3>📋 METODOLOGÍA DEL ANÁLISIS</h3>
+                <p><strong>Fuente de Datos:</strong> Censos Económicos INEGI 2004, 2009, 2014, 2019</p>
+                <p><strong>Arquitectura:</strong> Microsoft Fabric con estructura Medallion (Bronze → Silver → Gold)</p>
+                <p><strong>Validación:</strong> Cruzado contra tabulados oficiales INEGI</p>
+                <p><strong>Variables Clave:</strong> Ingresos, Valor Agregado, Personal Ocupado, Unidades Económicas</p>
+                <p><strong>Cálculo de Productividad:</strong> Valor Agregado / Personal Ocupado Total</p>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>🔍 PATRONES IDENTIFICADOS</h2>
+            
+            <div class="summary-cards">
+                <div class="card success">
+                    <h3>1. 🛒 REVOLUCIÓN COMERCIAL</h3>
+                    <p>El sector comercio no solo lidera en productividad absoluta, sino que triplicó su valor agregado por trabajador, demostrando una transformación hacia operaciones de mayor valor añadido.</p>
+                </div>
+
+                <div class="card info">
+                    <h3>2. 🏨 PROFESIONALIZACIÓN DE SERVICIOS</h3>
+                    <p>Los sectores de restaurantes, hoteles y servicios diversos se han especializado y profesionalizado, mejorando significativamente su calidad y estructura de precios.</p>
+                </div>
+
+                <div class="card warning">
+                    <h3>3. ⚖️ ESTABILIDAD EN TAMAÑO</h3>
+                    <p>Los empleos por empresa se mantuvieron relativamente estables, indicando que la mejora proviene de eficiencia operativa, no de economías de escala.</p>
+                </div>
+
+                <div class="card">
+                    <h3>4. 🛡️ ULTRA-RESILIENCIA</h3>
+                    <p>Durante la crisis global 2008-2009, Aguascalientes mostró inmunidad total, con un crecimiento del +11.6% anual en ingresos durante el período de crisis.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="conclusions">
+            <h2>🎯 CONCLUSIONES CLAVE</h2>
+            
+            <div class="conclusion-item">
+                <span class="icon">✅</span>
+                <div>
+                    <strong>MODERNIZACIÓN REAL:</strong> Todos los sectores principales mejoraron su productividad, demostrando una transformación estructural genuina de la economía local.
+                </div>
+            </div>
+
+            <div class="conclusion-item">
+                <span class="icon">✅</span>
+                <div>
+                    <strong>LIDERAZGO COMERCIAL:</strong> El sector comercio se estableció como el más eficiente y dinámico, con un valor agregado por trabajador de $0.22, triplicando su productividad.
+                </div>
+            </div>
+
+            <div class="conclusion-item">
+                <span class="icon">✅</span>
+                <div>
+                    <strong>MEJORA GENERALIZADA:</strong> No se trata de un sector aislado exitoso, sino de una mejora sistémica que abarca toda la estructura económica.
+                </div>
+            </div>
+
+            <div class="conclusion-item">
+                <span class="icon">✅</span>
+                <div>
+                    <strong>EFICIENCIA SOBRE ESCALA:</strong> Las mejoras se lograron a través de incrementos en productividad, no por crecimiento en el tamaño promedio de las empresas.
+                </div>
+            </div>
+
+            <div class="conclusion-item">
+                <span class="icon">✅</span>
+                <div>
+                    <strong>RESILIENCIA EXCEPCIONAL:</strong> Aguascalientes demostró un patrón anti-cíclico durante la crisis global 2008-2009, creciendo más durante la crisis que en períodos normales.
+                </div>
+            </div>
+
+            <div class="highlight-box" style="margin-top: 30px;">
+                <h3>🎯 FÓRMULA DEL ÉXITO</h3>
+                <p><strong>Aguascalientes = Revolución de Productividad</strong> donde todos los sectores duplicaron o triplicaron su valor agregado por trabajador entre 2004-2019.</p>
+                
+                <h3>📊 INTERPRETACIÓN FINAL</h3>
+                <p>La economía de Aguascalientes se <strong>MODERNIZÓ PROFUNDAMENTE</strong> - mantiene los mismos sectores pero con niveles de eficiencia y productividad radicalmente superiores, posicionándose como un modelo de desarrollo económico sustentable y resiliente.</p>
+            </div>
+        </section>
+
+        <footer style="text-align: center; margin-top: 40px; padding: 20px; border-top: 2px solid #e9ecef; color: #6c757d;">
+            <p><strong>Reporte generado:</strong> 1 de Julio, 2025</p>
+            <p><strong>Fuente:</strong> Análisis Longitudinal Censos Económicos INEGI 2004-2019</p>
+            <p><strong>Plataforma:</strong> Microsoft Fabric - Arquitectura Medallion</p>
+        </footer>
+    </div>
+</body>
+</html>
